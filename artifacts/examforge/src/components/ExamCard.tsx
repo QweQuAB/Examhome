@@ -53,8 +53,8 @@ export function ExamCard({ exam, layout, onShare, onDelete }: ExamCardProps) {
 
 function ExamCardStacked({ exam, onShare, onDelete }: Omit<ExamCardProps, "layout">) {
   return (
-    <Card className="shadow-sm transition-all hover:shadow-md border-border/60 hover:border-accent/40">
-      <CardContent className="p-4">
+    <Card className="shadow-sm transition-all hover:shadow-md border-border/60 hover:border-accent/40 overflow-hidden">
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-start gap-4">
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -113,11 +113,11 @@ function ExamCardStacked({ exam, onShare, onDelete }: Omit<ExamCardProps, "layou
         </div>
 
         <div className="flex gap-2 mt-4">
-          <Link href={`/exams/${exam.id}`} className="flex-1">
-            <Button variant="secondary" className="w-full">Manage</Button>
+          <Link href={`/exams/${exam.id}`} className="flex-1 min-w-0">
+            <Button variant="secondary" className="w-full text-xs sm:text-sm">Manage</Button>
           </Link>
-          <Link href={`/exams/${exam.id}/take`} className="flex-1">
-            <Button variant="default" className="w-full bg-primary hover:bg-primary/90 gap-1">
+          <Link href={`/exams/${exam.id}/take`} className="flex-1 min-w-0">
+            <Button variant="default" className="w-full bg-primary hover:bg-primary/90 gap-1 text-xs sm:text-sm">
               Take Quiz <ArrowRight className="w-3 h-3" />
             </Button>
           </Link>
@@ -129,7 +129,7 @@ function ExamCardStacked({ exam, onShare, onDelete }: Omit<ExamCardProps, "layou
 
 function ExamCardGrid({ exam, onShare, onDelete }: Omit<ExamCardProps, "layout">) {
   return (
-    <Card className="flex flex-col shadow-sm transition-all hover:shadow-md border-border/60 hover:border-accent/40">
+    <Card className="flex flex-col shadow-sm transition-all hover:shadow-md border-border/60 hover:border-accent/40 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1 min-w-0">
@@ -186,11 +186,11 @@ function ExamCardGrid({ exam, onShare, onDelete }: Omit<ExamCardProps, "layout">
       </CardContent>
 
       <CardFooter className="pt-3 border-t border-border/40 gap-2">
-        <Link href={`/exams/${exam.id}`} className="flex-1">
-          <Button variant="secondary" className="w-full">Manage</Button>
+        <Link href={`/exams/${exam.id}`} className="flex-1 min-w-0">
+          <Button variant="secondary" className="w-full text-xs sm:text-sm">Manage</Button>
         </Link>
-        <Link href={`/exams/${exam.id}/take`} className="flex-1">
-          <Button variant="default" className="w-full bg-primary hover:bg-primary/90 gap-1">
+        <Link href={`/exams/${exam.id}/take`} className="flex-1 min-w-0">
+          <Button variant="default" className="w-full bg-primary hover:bg-primary/90 gap-1 text-xs sm:text-sm">
             Take Quiz <ArrowRight className="w-3 h-3" />
           </Button>
         </Link>

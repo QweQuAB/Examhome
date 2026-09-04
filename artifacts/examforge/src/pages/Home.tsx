@@ -148,66 +148,66 @@ export default function Home() {
   }, [examsList, preferences]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 px-3 sm:px-4 md:px-6 overflow-x-hidden">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-primary tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Overview of your study progress and exam statistics.</p>
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Overview of your study progress and exam statistics.</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-sm">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Exams</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Exams</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             {isLoadingDashboard ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-3xl font-bold">{dashboard?.examCount || 0}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{dashboard?.examCount || 0}</div>
             )}
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Questions</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             {isLoadingDashboard ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-3xl font-bold">{dashboard?.questionCount || 0}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{dashboard?.questionCount || 0}</div>
             )}
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Attempts Completed</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Completed</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             {isLoadingDashboard ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-3xl font-bold">{dashboard?.finishedAttemptCount || 0}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{dashboard?.finishedAttemptCount || 0}</div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              Out of {dashboard?.attemptCount || 0} started
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+              of {dashboard?.attemptCount || 0} started
             </p>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Avg Score</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             {isLoadingDashboard ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-3xl font-bold">
+              <div className="text-2xl sm:text-3xl font-bold">
                 {dashboard?.avgScorePct ? `${Math.round(dashboard.avgScorePct)}%` : "—"}
               </div>
             )}
@@ -215,11 +215,11 @@ export default function Home() {
         </Card>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-6 lg:gap-8 lg:grid-cols-3 min-w-0">
         {/* Exams List */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4 min-w-0">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-serif font-semibold text-primary">Library</h2>
+            <h2 className="text-lg sm:text-xl font-serif font-semibold text-primary">Library</h2>
             <div className="flex gap-2">
               <Button
                 size="sm"
@@ -338,7 +338,7 @@ export default function Home() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-8">
+        <div className="space-y-6 lg:space-y-8 min-w-0">
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 font-serif">

@@ -69,12 +69,12 @@ export function LibraryControls({
   return (
     <div className="space-y-3">
       {/* Main Controls Row */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px] max-w-md">
+        <div className="relative flex-1 min-w-0 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by title, course, or institution..."
+            placeholder="Search..."
             value={preferences.search}
             onChange={(e) => updatePref({ search: e.target.value })}
             className="pl-9 pr-9"
@@ -94,7 +94,7 @@ export function LibraryControls({
           value={preferences.sortBy}
           onValueChange={(value) => updatePref({ sortBy: value as SortOption })}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-auto min-w-[120px] sm:w-[180px]">
             <ArrowUpDown className="h-4 w-4 mr-2" />
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
