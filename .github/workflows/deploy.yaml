@@ -45,6 +45,9 @@ jobs:
         env:
           BASE_PATH: /Examhome/
 
+      - name: Debug build output
+        run: find ./dist -maxdepth 2 -type f | head -20 || echo "dist not found"; find ./artifacts/examforge/dist -maxdepth 2 -type f 2>/dev/null | head -20 || echo "artifacts/examforge/dist not found"
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
