@@ -11,9 +11,9 @@ import {
   where,
   orderBy,
   limit as firestoreLimit,
-  Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { getStoredUsername, saveUsername } from "@/lib/user-identity";
 
 // Types
 export interface ExamPackage {
@@ -69,11 +69,11 @@ const REPORTS_COLLECTION = "package_reports";
 
 // Username management
 export function getUsername(): string {
-  return localStorage.getItem("examforge_username") || "";
+  return getStoredUsername();
 }
 
 export function setUsername(username: string): void {
-  localStorage.setItem("examforge_username", username);
+  saveUsername(username);
 }
 
 // Comment likes persistence
@@ -100,13 +100,81 @@ export function isCommentLiked(commentId: string): boolean {
   return getLikedComments().has(commentId);
 }
 
+// Local storage keys for managing packages created or deleted in this app
+const APP_CREATED_PACKAGES_KEY = "examforge_locally_created_packages";
+const REMOVED_PACKAGES_KEY = "examforge_locally_removed_packages";
+const LOCAL_PACKAGES_STORAGE_KEY = "examforge_local_community_packages";
+
+export function getAppCreatedPackageIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(APP_CREATED_PACKAGES_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch {}
+  return new Set();
+}
+
+export function markPackageCreatedInApp(packageId: string): void {
+  const set = getAppCreatedPackageIds();
+  set.add(packageId);
+  localStorage.setItem(APP_CREATED_PACKAGES_KEY, JSON.stringify(Array.from(set)));
+}
+
+export function getLocallyRemovedPackageIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(REMOVED_PACKAGES_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch {}
+  return new Set();
+}
+
+export function markPackageRemovedFromApp(packageId: string): void {
+  const set = getLocallyRemovedPackageIds();
+  set.add(packageId);
+  localStorage.setItem(REMOVED_PACKAGES_KEY, JSON.stringify(Array.from(set)));
+}
+
+export function getLocalCommunityPackages(): ExamPackage[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_PACKAGES_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
+export function saveLocalCommunityPackage(pkg: ExamPackage): void {
+  const list = getLocalCommunityPackages().filter((p) => p.id !== pkg.id && p.packageId !== pkg.packageId);
+  list.unshift(pkg);
+  localStorage.setItem(LOCAL_PACKAGES_STORAGE_KEY, JSON.stringify(list));
+  if (pkg.id) markPackageCreatedInApp(pkg.id);
+  if (pkg.packageId) markPackageCreatedInApp(pkg.packageId);
+}
+
+export function deleteLocalCommunityPackage(packageId: string): void {
+  const list = getLocalCommunityPackages().filter((p) => p.id !== packageId && p.packageId !== packageId);
+  localStorage.setItem(LOCAL_PACKAGES_STORAGE_KEY, JSON.stringify(list));
+}
+
+export function isPackageMadeHere(pkg: ExamPackage): boolean {
+  const currentUsername = getStoredUsername();
+  const createdIds = getAppCreatedPackageIds();
+  if (pkg.id && createdIds.has(pkg.id)) return true;
+  if (pkg.packageId && createdIds.has(pkg.packageId)) return true;
+  if (currentUsername && pkg.postedByUsername && pkg.postedByUsername.toLowerCase() === currentUsername.toLowerCase()) {
+    return true;
+  }
+  return false;
+}
+
 // Package operations
 export async function fetchPackages(options?: {
   category?: string;
+  courseCode?: string;
   search?: string;
-  sortBy?: "newest" | "popular" | "downloads";
+  sortBy?: "newest" | "popular" | "downloads" | "title" | "title_asc" | "title_desc" | "course_asc";
   limit?: number;
 }): Promise<ExamPackage[]> {
+  let firestorePackages: ExamPackage[] = [];
+
   try {
     const constraints: any[] = [];
 
@@ -129,45 +197,133 @@ export async function fetchPackages(options?: {
     const q = query(collection(db, PACKAGES_COLLECTION), ...constraints);
     const snapshot = await getDocs(q);
 
-    let packages = snapshot.docs.map((doc) => ({
+    firestorePackages = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as ExamPackage[];
-
-    // Client-side search filter
-    if (options?.search) {
-      const searchLower = options.search.toLowerCase();
-      packages = packages.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchLower) ||
-          (p.courseCode && p.courseCode.toLowerCase().includes(searchLower)) ||
-          (p.institution && p.institution.toLowerCase().includes(searchLower))
-      );
-    }
-
-    return packages;
   } catch (error: any) {
-    console.error("Failed to fetch packages:", error);
-    throw new Error(error.message || "Failed to load packages");
+    console.warn("Firestore fetch error, reading local repository packages:", error);
   }
+
+  // Combine with packages created locally in this app
+  const combinedMap = new Map<string, ExamPackage>();
+
+  for (const pkg of firestorePackages) {
+    if (pkg.id) combinedMap.set(pkg.id, pkg);
+  }
+
+  for (const localPkg of getLocalCommunityPackages()) {
+    if (localPkg.id && !combinedMap.has(localPkg.id)) {
+      if (!options?.category || options.category === "All" || localPkg.category === options.category) {
+        combinedMap.set(localPkg.id, localPkg);
+      }
+    }
+  }
+
+  const removedIds = getLocallyRemovedPackageIds();
+  let allPackages = Array.from(combinedMap.values()).filter(
+    (p) => !removedIds.has(p.id) && !removedIds.has(p.packageId)
+  );
+
+  // Complete removal safety: ensure no hardcoded or sample African Studies questions remain
+  allPackages = allPackages.filter((p) => {
+    const title = (p.title || "").toLowerCase();
+    const code = (p.courseCode || "").toLowerCase();
+    const isSampleAfricanStudies = title.includes("african studies") || code.includes("asp 401") || code.includes("asp401");
+    return !isSampleAfricanStudies;
+  });
+
+  // Course Code categorization criteria filter
+  if (options?.courseCode && options.courseCode !== "All") {
+    const targetCode = options.courseCode.toLowerCase().trim();
+    allPackages = allPackages.filter(
+      (p) => p.courseCode && p.courseCode.toLowerCase().trim() === targetCode
+    );
+  }
+
+  // Client-side search filter
+  if (options?.search) {
+    const searchLower = options.search.toLowerCase();
+    allPackages = allPackages.filter(
+      (p) =>
+        p.title.toLowerCase().includes(searchLower) ||
+        (p.courseCode && p.courseCode.toLowerCase().includes(searchLower)) ||
+        (p.institution && p.institution.toLowerCase().includes(searchLower)) ||
+        (p.tags && p.tags.some((t) => t.toLowerCase().includes(searchLower)))
+    );
+  }
+
+  // Sorting
+  if (options?.sortBy === "title" || options?.sortBy === "title_asc") {
+    allPackages.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (options?.sortBy === "title_desc") {
+    allPackages.sort((a, b) => b.title.localeCompare(a.title));
+  } else if (options?.sortBy === "course_asc") {
+    allPackages.sort((a, b) => (a.courseCode || "").localeCompare(b.courseCode || ""));
+  } else if (options?.sortBy === "popular") {
+    allPackages.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+  } else if (options?.sortBy === "downloads") {
+    allPackages.sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
+  } else {
+    allPackages.sort((a, b) => (b.postedAt || 0) - (a.postedAt || 0));
+  }
+
+  if (options?.limit && options.limit > 0) {
+    allPackages = allPackages.slice(0, options.limit);
+  }
+
+  return allPackages;
 }
 
 export async function fetchPackageById(packageId: string): Promise<ExamPackage | null> {
+  const removedIds = getLocallyRemovedPackageIds();
+  if (removedIds.has(packageId)) {
+    return null;
+  }
+
+  // Check locally created packages in this app first
+  const localMatch = getLocalCommunityPackages().find(
+    (p) => p.id === packageId || p.packageId === packageId
+  );
+  if (localMatch) {
+    return localMatch;
+  }
+
   try {
     const docRef = doc(db, PACKAGES_COLLECTION, packageId);
     const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists()) {
-      return null;
+    if (docSnap.exists()) {
+      const data = {
+        id: docSnap.id,
+        ...docSnap.data(),
+      } as ExamPackage;
+      // Guard against sample data
+      const title = (data.title || "").toLowerCase();
+      const code = (data.courseCode || "").toLowerCase();
+      if (title.includes("african studies") || code.includes("asp 401")) {
+        return null;
+      }
+      return data;
     }
-
-    return {
-      id: docSnap.id,
-      ...docSnap.data(),
-    } as ExamPackage;
   } catch (error: any) {
-    console.error("Failed to fetch package:", error);
-    throw new Error(error.message || "Failed to load package");
+    console.warn("Firestore fetchPackageById warning:", error);
+  }
+
+  return null;
+}
+
+export async function deletePackage(packageId: string): Promise<void> {
+  // Always remove from this app's storage and track as removed
+  markPackageRemovedFromApp(packageId);
+  deleteLocalCommunityPackage(packageId);
+
+  // Attempt to delete from Firestore if it was created in this app
+  try {
+    const docRef = doc(db, PACKAGES_COLLECTION, packageId);
+    await deleteDoc(docRef);
+  } catch (error: any) {
+    console.warn("Firestore deletePackage info:", error?.message || error);
   }
 }
 

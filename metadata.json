@@ -1,0 +1,6 @@
+{
+  "name": "ExamForge",
+  "description": "A professional scholarly exam generator and quiz player for mastering course materials.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

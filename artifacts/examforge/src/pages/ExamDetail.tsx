@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useParams, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -109,6 +109,13 @@ export default function ExamDetail() {
     query: { enabled: !!examId, queryKey: getListAttemptsForExamQueryKey(examId!, { limit: 10 }) }
   });
 
+  const attemptsList = useMemo(() => {
+    if (Array.isArray(attempts)) return attempts;
+    if (Array.isArray((attempts as any)?.attempts)) return (attempts as any).attempts;
+    if (Array.isArray((attempts as any)?.data)) return (attempts as any).data;
+    return [];
+  }, [attempts]);
+
   // -- Mutations --
   const updateExam = useUpdateExam();
   const deleteExam = useDeleteExam();
@@ -173,14 +180,14 @@ export default function ExamDetail() {
   // -- Export Handlers --
   const handleExportExamForge = () => {
     if (!exam) return;
-    const pkg = buildExamPackage(exam, exam.questions);
+    const pkg = buildExamPackage(exam, exam.questions || []);
     downloadAsExamForge(pkg);
     toast.success("Package downloaded as .examforge file");
   };
 
   const handleCopyJson = async () => {
     if (!exam) return;
-    const pkg = buildExamPackage(exam, exam.questions);
+    const pkg = buildExamPackage(exam, exam.questions || []);
     const success = await copyPackageToClipboard(pkg);
     if (success) {
       toast.success("Package JSON copied to clipboard");
@@ -191,7 +198,7 @@ export default function ExamDetail() {
 
   const handleShare = async () => {
     if (!exam) return;
-    const pkg = buildExamPackage(exam, exam.questions);
+    const pkg = buildExamPackage(exam, exam.questions || []);
     const success = await sharePackage(pkg);
     if (success) {
       toast.success("Package shared successfully");
@@ -201,7 +208,7 @@ export default function ExamDetail() {
   const handleShareQuestion = async (questionIndex: number) => {
     if (!exam) return;
     const { shareSingleQuestion } = await import("@/lib/package-utils");
-    const pkg = buildExamPackage(exam, exam.questions);
+    const pkg = buildExamPackage(exam, exam.questions || []);
     const success = await shareSingleQuestion(pkg, questionIndex);
     if (success) {
       toast.success("Question shared");
@@ -211,7 +218,7 @@ export default function ExamDetail() {
   const handleCopyQuestion = async (questionIndex: number) => {
     if (!exam) return;
     const { copySingleQuestionToClipboard } = await import("@/lib/package-utils");
-    const pkg = buildExamPackage(exam, exam.questions);
+    const pkg = buildExamPackage(exam, exam.questions || []);
     const success = await copySingleQuestionToClipboard(pkg, questionIndex);
     if (success) {
       toast.success("Question JSON copied");
@@ -396,7 +403,7 @@ export default function ExamDetail() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start h-12 bg-transparent border-b border-border/40 rounded-none p-0">
           <TabsTrigger value="questions" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-6 h-12 font-medium">
-            Questions ({exam.questions.length})
+            Questions ({(exam.questions || []).length})
           </TabsTrigger>
           <TabsTrigger value="stats" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-6 h-12 font-medium">
             Stats & Attempts
@@ -431,7 +438,7 @@ export default function ExamDetail() {
           )}
 
           <div className="space-y-4">
-            {exam.questions.map((q, index) => (
+            {(exam.questions || []).map((q, index) => (
               editingQuestionId === q.id ? (
                 <Card key={q.id} className="border-primary shadow-md relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
@@ -535,7 +542,7 @@ export default function ExamDetail() {
               )
             ))}
 
-            {exam.questions.length === 0 && !showAddQuestion && (
+            {(exam.questions || []).length === 0 && !showAddQuestion && (
               <div className="text-center py-16 border-2 border-dashed border-border/60 rounded-xl">
                 <Target className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
                 <h3 className="text-lg font-medium">No questions yet</h3>
@@ -608,11 +615,11 @@ export default function ExamDetail() {
               <CardContent className="p-0">
                 {isLoadingAttempts ? (
                   <div className="p-6"><Skeleton className="h-20 w-full" /></div>
-                ) : attempts?.length === 0 ? (
+                ) : attemptsList.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">No attempts recorded yet.</div>
                 ) : (
                   <div className="divide-y divide-border/40">
-                    {attempts?.map(attempt => (
+                    {attemptsList.map(attempt => (
                       <div key={attempt.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                         <div>
                           <div className="font-medium">{format(new Date(attempt.startedAt), "PPP 'at' p")}</div>

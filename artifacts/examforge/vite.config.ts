@@ -5,7 +5,7 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 // Fallback port so GitHub Actions doesn't crash
-const rawPort = process.env.PORT || "5173";
+const rawPort = process.env.PORT || "3000";
 
 const port = Number(rawPort);
 
@@ -14,7 +14,7 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 // Fallback base path matching your GitHub repository name
-const basePath = process.env.BASE_PATH || "/exam/";
+const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
   base: basePath,
@@ -45,7 +45,7 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(import.meta.dirname, "../../dist"),
     emptyOutDir: true,
   },
   server: {

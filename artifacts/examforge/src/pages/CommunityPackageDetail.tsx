@@ -16,7 +16,9 @@ import {
   Send,
   Trash2,
   AlertCircle,
+  FolderPlus,
 } from "lucide-react";
+import { AddToCollectionDialog } from "@/components/AddToCollectionDialog";
 import {
   fetchPackageById,
   likePackage,
@@ -65,10 +67,24 @@ export default function CommunityPackageDetail() {
   const [error, setError] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showAddToCollection, setShowAddToCollection] = useState(false);
 
   useEffect(() => {
     loadPackage();
   }, [packageId]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (
+        params.get("action") === "addToCollection" ||
+        params.get("add") === "true" ||
+        params.get("import") === "true"
+      ) {
+        setShowAddToCollection(true);
+      }
+    }
+  }, [packageId, pkg]);
 
   const loadPackage = async () => {
     if (!packageId) return;
@@ -120,7 +136,7 @@ export default function CommunityPackageDetail() {
         courseCode: pkg.courseCode,
         institution: pkg.institution,
         description: pkg.description,
-        questions: [...pkg.mcqQuestions, ...pkg.essayQuestions].sort(
+        questions: [...(pkg.mcqQuestions || []), ...(pkg.essayQuestions || [])].sort(
           (a, b) => a.position - b.position
         ),
       };
@@ -173,7 +189,9 @@ export default function CommunityPackageDetail() {
     );
   }
 
-  const totalQuestions = pkg.mcqQuestions.length + pkg.essayQuestions.length;
+  const mcqQuestions = pkg.mcqQuestions || [];
+  const essayQuestions = pkg.essayQuestions || [];
+  const totalQuestions = mcqQuestions.length + essayQuestions.length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -209,14 +227,24 @@ export default function CommunityPackageDetail() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 min-w-[120px]">
+            <div className="flex flex-col gap-2 min-w-[150px]">
+              <Button
+                id="add-to-collection-btn"
+                onClick={() => setShowAddToCollection(true)}
+                className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-sm"
+              >
+                <FolderPlus className="w-4 h-4" /> Add to Collection
+              </Button>
+              <Button onClick={handleDownload} variant="outline" className="gap-2">
+                <Download className="w-4 h-4" /> Download .examforge
+              </Button>
               <div className="flex gap-2">
                 <Button
                   variant={liked ? "default" : "outline"}
                   size="sm"
                   onClick={handleLike}
                   disabled={liked}
-                  className="gap-1"
+                  className="gap-1 flex-1"
                 >
                   <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
                   {pkg.likeCount}
@@ -229,13 +257,11 @@ export default function CommunityPackageDetail() {
                   size="sm"
                   onClick={() => setShowReportDialog(true)}
                   className="gap-1 text-destructive"
+                  title="Report package"
                 >
                   <Flag className="w-4 h-4" />
                 </Button>
               </div>
-              <Button onClick={handleDownload} className="gap-2">
-                <Download className="w-4 h-4" /> Download
-              </Button>
             </div>
           </div>
         </CardContent>
@@ -249,27 +275,27 @@ export default function CommunityPackageDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {pkg.mcqQuestions.length > 0 && (
+          {mcqQuestions.length > 0 && (
             <div>
               <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">
-                MCQ Questions ({pkg.mcqQuestions.length})
+                MCQ Questions ({mcqQuestions.length})
               </h3>
               <div className="space-y-3">
-                {pkg.mcqQuestions.map((q, i) => (
+                {mcqQuestions.map((q, i) => (
                   <QuestionPreview key={q.id || i} question={q} index={i} type="mcq" />
                 ))}
               </div>
             </div>
           )}
 
-          {pkg.essayQuestions.length > 0 && (
+          {essayQuestions.length > 0 && (
             <div>
               <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">
-                Essay Questions ({pkg.essayQuestions.length})
+                Essay Questions ({essayQuestions.length})
               </h3>
               <div className="space-y-3">
-                {pkg.essayQuestions.map((q, i) => (
-                  <QuestionPreview key={q.id || i} question={q} index={i + pkg.mcqQuestions.length} type="essay" />
+                {essayQuestions.map((q, i) => (
+                  <QuestionPreview key={q.id || i} question={q} index={i + mcqQuestions.length} type="essay" />
                 ))}
               </div>
             </div>
@@ -288,6 +314,13 @@ export default function CommunityPackageDetail() {
         packageTitle={pkg.title}
         packageAuthor={pkg.author || pkg.postedByUsername}
         packageCategory={pkg.category}
+      />
+
+      {/* Add to Collection Dialog */}
+      <AddToCollectionDialog
+        packageData={pkg}
+        open={showAddToCollection}
+        onOpenChange={setShowAddToCollection}
       />
     </div>
   );

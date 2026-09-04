@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, CheckCircle, XCircle, ArrowRight, ArrowLeft,
-  Award, Loader2, Star, Home, RotateCcw
+  Award, Loader2, Star, Home, RotateCcw, AlertCircle
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,9 @@ export default function AttemptTake() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [essayAnswer, setEssayAnswer] = useState("");
+  const [showResults, setShowResults] = useState<boolean | null>(null);
 
-  const { data: attempt, isLoading } = useGetAttempt(attemptId!, {
+  const { data: attempt, isLoading, isError, error } = useGetAttempt(attemptId!, {
     query: { enabled: !!attemptId, queryKey: getGetAttemptQueryKey(attemptId!) }
   });
 
@@ -52,11 +53,11 @@ export default function AttemptTake() {
 
   // Jump to first unanswered question on load
   useEffect(() => {
-    if (attempt && attempt.status === "in_progress") {
+    if (attempt && attempt.status === "in_progress" && Array.isArray(attempt.questions)) {
       const firstUnanswered = attempt.questions.findIndex(q => !q.isAnswered);
       if (firstUnanswered !== -1 && firstUnanswered !== currentIndex) {
         setCurrentIndex(firstUnanswered);
-      } else if (firstUnanswered === -1) {
+      } else if (firstUnanswered === -1 && attempt.questions.length > 0) {
         setCurrentIndex(attempt.questions.length - 1);
       }
     }
@@ -70,6 +71,7 @@ export default function AttemptTake() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetAttemptQueryKey(attemptId!) });
           localStorage.removeItem(`examforge_resume_${attempt.examId}`);
+          setShowResults(true);
         }
       }
     );
@@ -84,22 +86,82 @@ export default function AttemptTake() {
     handleAutoSubmit();
   }, [handleAutoSubmit]);
 
-  const handleTimerAdjust = useCallback((newTimeLimit: number | null) => {
-    // Timer adjustment is handled by the parent (ExamTake) for new attempts
-    // For in-progress attempts, we just update the display
-    // This could be extended with an API call to update the attempt's time limit
+  const handleTimerAdjust = useCallback((_newTimeLimit: number | null) => {
+    // Timer adjustment handled by parent
   }, []);
 
-  if (isLoading || !attempt) {
-    return <div className="min-h-[100dvh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError || !attempt || (attempt as any).error) {
+    return (
+      <div className="min-h-[100dvh] bg-background flex flex-col items-center justify-center p-4 font-sans">
+        <Card className="max-w-md w-full p-8 text-center space-y-4 border-border/60 shadow-lg">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
+          <h2 className="text-xl font-bold font-serif text-foreground">Attempt Not Found</h2>
+          <p className="text-muted-foreground text-sm">
+            {(error as any)?.message || (attempt as any)?.error || "We couldn't load this attempt. It may have expired or been removed."}
+          </p>
+          <div className="pt-2 flex justify-center gap-3">
+            <Button onClick={() => setLocation("/")} className="gap-2">
+              <Home className="w-4 h-4" /> Return to Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   const isFinished = attempt.status === "finished";
-  const question = attempt.questions[currentIndex];
-  const progressPct = ((currentIndex + 1) / attempt.total) * 100;
+  const questions = attempt.questions || [];
+
+  // Default to showing results screen if attempt is finished, unless user specifically chose to review
+  const shouldShowResults = isFinished && (showResults === null ? true : showResults);
+
+  if (shouldShowResults) {
+    return (
+      <ResultsScreen
+        attempt={attempt}
+        attemptId={attemptId!}
+        onReview={() => {
+          setShowResults(false);
+          setCurrentIndex(0);
+        }}
+      />
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-[100dvh] bg-background flex flex-col items-center justify-center p-4 font-sans">
+        <Card className="max-w-md w-full p-8 text-center space-y-4 border-border/60 shadow-lg">
+          <AlertCircle className="w-12 h-12 text-muted-foreground/60 mx-auto" />
+          <h2 className="text-xl font-bold font-serif">No Questions Available</h2>
+          <p className="text-muted-foreground text-sm">
+            This exam attempt does not contain any questions.
+          </p>
+          <div className="pt-2 flex justify-center gap-3">
+            <Button onClick={() => setLocation("/")} className="gap-2">
+              <Home className="w-4 h-4" /> Back to Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const safeIndex = Math.min(Math.max(0, currentIndex), questions.length - 1);
+  const question = questions[safeIndex];
+  const totalQuestions = attempt.total || questions.length;
+  const progressPct = ((safeIndex + 1) / totalQuestions) * 100;
 
   const handleOptionClick = (index: number) => {
-    if (isFinished || question.isAnswered || submittingId === question.id) return;
+    if (!question || isFinished || question.isAnswered || submittingId === question.id) return;
 
     setSubmittingId(question.id);
     submitAnswer.mutate({
@@ -113,7 +175,7 @@ export default function AttemptTake() {
       onSuccess: (result) => {
         setSubmittingId(null);
         queryClient.setQueryData(getGetAttemptQueryKey(attemptId!), (old: any) => {
-          if (!old) return old;
+          if (!old || !Array.isArray(old.questions)) return old;
           const newQuestions = old.questions.map((q: any) => {
             if (q.id === question.id) {
               return {
@@ -134,7 +196,7 @@ export default function AttemptTake() {
   };
 
   const handleEssaySubmit = () => {
-    if (isFinished || question.isAnswered || submittingId === question.id || !essayAnswer.trim()) return;
+    if (!question || isFinished || question.isAnswered || submittingId === question.id || !essayAnswer.trim()) return;
 
     setSubmittingId(question.id);
     submitAnswer.mutate({
@@ -145,10 +207,10 @@ export default function AttemptTake() {
         elapsedSeconds,
       }
     }, {
-      onSuccess: (result) => {
+      onSuccess: () => {
         setSubmittingId(null);
         queryClient.setQueryData(getGetAttemptQueryKey(attemptId!), (old: any) => {
-          if (!old) return old;
+          if (!old || !Array.isArray(old.questions)) return old;
           const newQuestions = old.questions.map((q: any) => {
             if (q.id === question.id) {
               return {
@@ -170,14 +232,17 @@ export default function AttemptTake() {
   };
 
   const handleNext = () => {
-    if (currentIndex < attempt.total - 1) {
+    if (safeIndex < totalQuestions - 1) {
       setCurrentIndex(curr => curr + 1);
     } else {
-      if (!isFinished) {
+      if (isFinished) {
+        setShowResults(true);
+      } else {
         finishAttempt.mutate({ attemptId: attemptId!, data: { elapsedSeconds } }, {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getGetAttemptQueryKey(attemptId!) });
             localStorage.removeItem(`examforge_resume_${attempt.examId}`);
+            setShowResults(true);
           }
         });
       }
@@ -185,14 +250,10 @@ export default function AttemptTake() {
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
+    if (safeIndex > 0) {
       setCurrentIndex(curr => curr - 1);
     }
   };
-
-  if (isFinished && currentIndex === attempt.total - 1) {
-    return <ResultsScreen attempt={attempt} attemptId={attemptId!} onReview={() => setCurrentIndex(0)} />;
-  }
 
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
@@ -202,9 +263,21 @@ export default function AttemptTake() {
         {/* Progress Header */}
         <div className="bg-card rounded-2xl p-4 md:p-6 shadow-lg border border-border/60 space-y-3">
           <div className="flex items-center justify-between gap-4 md:gap-6 flex-wrap">
-            <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary text-sm font-semibold px-4 py-1.5 rounded-full border-border/40">
-              Q {currentIndex + 1} of {attempt.total}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary text-sm font-semibold px-4 py-1.5 rounded-full border-border/40">
+                Q {safeIndex + 1} of {totalQuestions}
+              </Badge>
+              {isFinished && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowResults(true)}
+                  className="text-xs gap-1.5 h-7"
+                >
+                  <Award className="w-3.5 h-3.5" /> Results
+                </Button>
+              )}
+            </div>
             <div className="flex-1 min-w-[200px]">
               <Progress value={progressPct} className="h-2.5 bg-secondary" />
             </div>
@@ -377,7 +450,7 @@ export default function AttemptTake() {
           <Button
             variant="ghost"
             onClick={handlePrev}
-            disabled={currentIndex === 0}
+            disabled={safeIndex === 0}
             className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 gap-2"
           >
             <ArrowLeft className="w-4 h-4" /> Previous
@@ -386,10 +459,10 @@ export default function AttemptTake() {
           <Button
             size="lg"
             onClick={handleNext}
-            disabled={!question.isAnswered && !isFinished}
-            className={`gap-2 font-bold px-8 shadow-md ${!question.isAnswered && !isFinished ? 'opacity-50' : 'bg-primary hover:bg-primary/90'}`}
+            disabled={!question?.isAnswered && !isFinished}
+            className={`gap-2 font-bold px-8 shadow-md ${!question?.isAnswered && !isFinished ? 'opacity-50' : 'bg-primary hover:bg-primary/90'}`}
           >
-            {currentIndex === attempt.total - 1 ? (
+            {safeIndex === totalQuestions - 1 ? (
                isFinished ? "View Results" : "Finish Attempt"
             ) : (
                <>Next <ArrowRight className="w-4 h-4" /></>
@@ -408,8 +481,9 @@ function ResultsScreen({ attempt, attemptId, onReview }: { attempt: any, attempt
   const userName = localStorage.getItem("examforge_user_name") || "";
   const [leaderboardSubmitted, setLeaderboardSubmitted] = useState(false);
 
-  const hasEssayQuestions = attempt.questions?.some((q: any) => q.questionType === "essay");
-  const hasMcqQuestions = attempt.questions?.some((q: any) => q.questionType === "mcq" || !q.questionType);
+  const questions = attempt?.questions || [];
+  const hasEssayQuestions = questions.some((q: any) => q.questionType === "essay");
+  const hasMcqQuestions = questions.some((q: any) => q.questionType === "mcq" || !q.questionType);
 
   // Auto-submit to leaderboard on finish (MCQ only, if name provided)
   useEffect(() => {
@@ -487,8 +561,8 @@ function ResultsScreen({ attempt, attemptId, onReview }: { attempt: any, attempt
 
         <div className="space-y-4">
           <h2 className="text-2xl font-serif font-bold px-2">Review Summary</h2>
-          {attempt.questions.map((q: any, i: number) => (
-            <Card key={q.id} className="shadow-sm border-border/60">
+          {questions.map((q: any, i: number) => (
+            <Card key={q.id || i} className="shadow-sm border-border/60">
               <CardContent className="p-6 flex flex-col md:flex-row gap-6">
                 <div className="flex-none pt-1">
                   {q.questionType === "essay" ? (
@@ -514,10 +588,12 @@ function ResultsScreen({ attempt, attemptId, onReview }: { attempt: any, attempt
                       <div className="flex gap-2">
                         <Badge variant="outline" className="bg-card text-muted-foreground border-border/60">Your Answer</Badge>
                         <span className={`font-medium ${q.isCorrect ? 'text-success' : 'text-destructive'}`}>
-                          {q.selectedIndex != null ? q.options[q.selectedIndex] : 'Skipped'}
+                          {q.selectedIndex != null && q.options && q.options[q.selectedIndex] !== undefined
+                            ? q.options[q.selectedIndex]
+                            : 'Skipped'}
                         </span>
                       </div>
-                      {!q.isCorrect && q.correctIndex != null && (
+                      {!q.isCorrect && q.correctIndex != null && q.options && q.options[q.correctIndex] !== undefined && (
                         <div className="flex gap-2">
                           <Badge variant="outline" className="bg-success/10 text-success border-success/20">Correct Answer</Badge>
                           <span className="font-medium text-success">{q.options[q.correctIndex]}</span>

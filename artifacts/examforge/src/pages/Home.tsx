@@ -84,28 +84,43 @@ export default function Home() {
     savePreferences(preferences);
   }, [preferences]);
 
+  const examsList = useMemo(() => {
+    if (Array.isArray(exams)) return exams;
+    if (Array.isArray((exams as any)?.exams)) return (exams as any).exams;
+    if (Array.isArray((exams as any)?.data)) return (exams as any).data;
+    return [];
+  }, [exams]);
+
+  const attemptsList = useMemo(() => {
+    if (Array.isArray(recentAttempts)) return recentAttempts;
+    if (Array.isArray((recentAttempts as any)?.attempts)) return (recentAttempts as any).attempts;
+    if (Array.isArray((recentAttempts as any)?.data)) return (recentAttempts as any).data;
+    return [];
+  }, [recentAttempts]);
+
+  const topExamsList = useMemo(() => {
+    if (Array.isArray(dashboard?.topExams)) return dashboard.topExams;
+    return [];
+  }, [dashboard?.topExams]);
+
   const availableCourses = useMemo(() => {
-    if (!exams) return [];
     const courses = new Set<string>();
-    exams.forEach((e) => {
+    examsList.forEach((e) => {
       if (e.courseCode) courses.add(e.courseCode);
     });
     return Array.from(courses).sort();
-  }, [exams]);
+  }, [examsList]);
 
   const availableInstitutions = useMemo(() => {
-    if (!exams) return [];
     const institutions = new Set<string>();
-    exams.forEach((e) => {
+    examsList.forEach((e) => {
       if (e.institution) institutions.add(e.institution);
     });
     return Array.from(institutions).sort();
-  }, [exams]);
+  }, [examsList]);
 
   const filteredExams = useMemo(() => {
-    if (!exams) return [];
-
-    let result = exams;
+    let result = examsList;
 
     // Search filter
     if (preferences.search) {
@@ -130,7 +145,7 @@ export default function Home() {
 
     // Sort
     return sortExams(result, preferences.sortBy);
-  }, [exams, preferences]);
+  }, [examsList, preferences]);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -333,10 +348,10 @@ export default function Home() {
             <CardContent className="space-y-4">
               {isLoadingDashboard ? (
                 <Skeleton className="h-32 w-full" />
-              ) : dashboard?.topExams.length === 0 ? (
+              ) : topExamsList.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No data yet</p>
               ) : (
-                dashboard?.topExams.map((exam, i) => (
+                topExamsList.map((exam, i) => (
                   <div key={exam.examId} className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-6 h-6 rounded-full bg-secondary text-xs font-bold text-muted-foreground">
                       {i + 1}
@@ -367,10 +382,10 @@ export default function Home() {
             <CardContent className="space-y-4">
               {isLoadingAttempts ? (
                 <Skeleton className="h-32 w-full" />
-              ) : recentAttempts?.length === 0 ? (
+              ) : attemptsList.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No attempts yet</p>
               ) : (
-                recentAttempts?.map((attempt) => (
+                attemptsList.map((attempt) => (
                   <div
                     key={attempt.id}
                     className="flex flex-col gap-1 border-b border-border/40 pb-3 last:border-0 last:pb-0"

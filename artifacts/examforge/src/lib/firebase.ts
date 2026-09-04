@@ -2,7 +2,7 @@ import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAU14e2SCKMIT-nuLcEqxcXrajDoaTGgw8",
+  apiKey: (typeof import.meta !== "undefined" && import.meta.env?.VITE_FIREBASE_API_KEY) || "AIzaSyAU14e2SCKMIT-nuLcEqxcXrajDoaTGgw8",
   authDomain: "striped-domain-898sv.firebaseapp.com",
   projectId: "striped-domain-898sv",
   storageBucket: "striped-domain-898sv.firebasestorage.app",

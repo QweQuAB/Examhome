@@ -91,7 +91,9 @@ export default function ExamTake() {
     return <div className="text-center py-20 text-muted-foreground">Exam not found</div>;
   }
 
-  if (exam.questions.length === 0) {
+  const questions = exam.questions || [];
+
+  if (questions.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-20">
         <Card className="border-border/60 shadow-sm text-center py-12">
@@ -125,7 +127,7 @@ export default function ExamTake() {
 
           <div className="flex flex-wrap justify-center gap-6 mb-10">
             <div className="bg-secondary rounded-2xl p-4 min-w-[100px]">
-              <div className="text-3xl font-bold text-primary">{exam.questions.length}</div>
+              <div className="text-3xl font-bold text-primary">{questions.length}</div>
               <div className="text-xs text-muted-foreground font-medium mt-1">QUESTIONS</div>
             </div>
             <div className="bg-secondary rounded-2xl p-4 min-w-[100px]">

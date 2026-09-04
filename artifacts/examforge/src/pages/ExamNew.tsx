@@ -87,7 +87,7 @@ export default function ExamNew() {
                     <FormItem>
                       <FormLabel>Course Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. ASP 401" {...field} />
+                        <Input placeholder="e.g. CS 101" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
