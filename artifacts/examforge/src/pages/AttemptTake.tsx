@@ -25,25 +25,73 @@ import { AiGradingCard } from "@/components/AiGradingCard";
 
 function formatEssayPrompt(prompt: string) {
   if (!prompt) return null;
-  const lines = prompt.split(/\n/);
-  const parts: { text: string; isSub: boolean; indent: number }[] = [];
-  for (const line of lines) {
+
+  // Pattern: (i), (ii), (iii)... or i), ii), iii)... or (1), (2)... or a), b)...
+  const subPattern = /(\((?:i{1,3}|iv|v|vi{0,3}|ix|x|[1-9]|[a-h])\)\s*|(?:^|\s)(?:i{1,3}|iv|v|vi{0,3}|ix|x)\)\s*|(?:^|\s)[a-h]\)\s*|(?:^|\s)\d+\.\s+)/gi;
+
+  // First split on explicit newlines
+  const rawLines = prompt.split(/\n/);
+  const parts: { text: string; isSub: boolean }[] = [];
+
+  for (const line of rawLines) {
     const trimmed = line.trim();
-    if (!trimmed) { parts.push({ text: "", isSub: false, indent: 0 }); continue; }
-    const subMatch = trimmed.match(/^([a-z])\)\s*(.+)/i) || trimmed.match(/^(\d+)\.\s*(.+)/);
-    if (subMatch) {
-      parts.push({ text: trimmed, isSub: true, indent: 1 });
-    } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      parts.push({ text: trimmed, isSub: true, indent: 1 });
-    } else {
-      parts.push({ text: trimmed, isSub: false, indent: 0 });
+    if (!trimmed) { parts.push({ text: "", isSub: false }); continue; }
+
+    // Check if this line itself starts with a subquestion marker
+    const lineStartSub = trimmed.match(/^(\((?:i{1,3}|iv|v|vi{0,3}|ix|x|[1-9]|[a-h])\)\s*|[a-h]\)\s*|\d+\.\s+)/i);
+    if (lineStartSub) {
+      parts.push({ text: trimmed, isSub: true });
+      continue;
+    }
+
+    // Try to split inline subquestions: "text text: (i) A, (ii) B, (iii) C"
+    const segments: string[] = [];
+    let lastIndex = 0;
+    let foundSub = false;
+
+    // Find all inline subquestion markers
+    const matches = [...trimmed.matchAll(/(?:,?\s+|(?:^|\s))(?:\((?:i{1,3}|iv|v|vi{0,3}|ix|x|[1-9a-h])\)\s*|(?:i{1,3}|iv|v|vi{0,3}|ix|x|[1-9a-h])\)\s*)/gi)];
+
+    if (matches.length >= 2) {
+      // Multiple subquestions found inline — split them
+      // The text before the first marker is the main question
+      const firstMarkerIdx = trimmed.indexOf(matches[0][0].trim());
+      const preamble = trimmed.substring(0, firstMarkerIdx).trim();
+      if (preamble) {
+        parts.push({ text: preamble.endsWith(":") ? preamble : preamble + ":", isSub: false });
+      }
+
+      for (let m = 0; m < matches.length; m++) {
+        const matchStart = trimmed.indexOf(matches[m][0].trim(), m === 0 ? 0 : trimmed.indexOf(matches[m - 1][0].trim()) + 1);
+        const nextStart = m + 1 < matches.length
+          ? trimmed.indexOf(matches[m + 1][0].trim(), matchStart + 1)
+          : trimmed.length;
+        const segment = trimmed.substring(matchStart, nextStart).trim().replace(/,\s*$/, "").trim();
+        if (segment) {
+          parts.push({ text: segment, isSub: true });
+        }
+      }
+      foundSub = true;
+    }
+
+    if (!foundSub) {
+      parts.push({ text: trimmed, isSub: false });
     }
   }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {parts.map((p, i) => (
-        <div key={i} className={p.isSub ? "pl-5 border-l-2 border-accent/30 text-base text-foreground/90" : ""}>
-          {p.text}
+        <div key={i}>
+          {p.text === "" ? (
+            <div className="h-2" />
+          ) : p.isSub ? (
+            <div className="pl-4 md:pl-6 py-0.5 text-foreground/90">
+              <span className="font-medium">{p.text}</span>
+            </div>
+          ) : (
+            <div className="text-foreground">{p.text}</div>
+          )}
         </div>
       ))}
     </div>
