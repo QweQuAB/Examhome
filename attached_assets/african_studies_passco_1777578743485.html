@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASP 401: African Studies · Past Questions Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-page: #f4f7fb; --card-bg: #ffffff; --primary: #1e3c5c; --primary-light: #2b4b6f;
+            --accent: #c89f3c; --text: #1e2b3a; --text-muted: #4b5e71; --border: #d9e1ec;
+            --correct: #1f8b4c; --correct-bg: #e6f4ea; --wrong: #b13e3e; --wrong-bg: #fdeded;
+            --reference: #6b4f8f; --reference-bg: #f0eaf9; --shadow: rgba(0, 20, 30, 0.08);
+        }
+        body {
+            background-color: var(--bg-page); font-family: 'Inter', sans-serif; color: var(--text);
+            padding: 30px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        .container { max-width: 820px; width: 100%; }
+        .badge {
+            background-color: var(--primary); color: white; font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1px; padding: 6px 14px; border-radius: 30px; display: inline-block; margin-bottom: 12px;
+        }
+        h1 { font-size: 2.3rem; font-weight: 700; color: var(--primary); letter-spacing: -0.5px; line-height: 1.2; }
+        .subhead {
+            color: var(--text-muted); font-size: 1rem; margin-top: 8px; margin-bottom: 25px;
+            border-left: 3px solid var(--accent); padding-left: 18px; background: rgba(200,159,60,0.05);
+            border-radius: 0 8px 8px 0;
+        }
+        .progress-panel {
+            background-color: var(--card-bg); border-radius: 18px; padding: 18px 25px; margin-bottom: 22px;
+            box-shadow: 0 6px 16px var(--shadow); border: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        }
+        .q-counter { background: var(--primary-light); color: white; padding: 6px 18px; border-radius: 30px; font-weight: 500; }
+        .score-badge { background: var(--accent); color: #1e2b3a; font-weight: 600; padding: 6px 18px; border-radius: 30px; }
+        .progress-bar-bg { height: 8px; background: #e2e8f0; border-radius: 8px; flex: 1; min-width: 200px; }
+        .progress-fill { height: 8px; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 8px; width: 0%; transition: width 0.3s; }
+        .card {
+            background-color: var(--card-bg); border-radius: 28px; padding: 30px 28px;
+            box-shadow: 0 20px 30px var(--shadow); border: 1px solid var(--border); margin-bottom: 24px;
+        }
+        .topic-tag { color: var(--accent); font-weight: 700; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; display: block; }
+        .question-text { font-size: 1.3rem; font-weight: 600; line-height: 1.5; margin-bottom: 28px; color: var(--primary); }
+        
+        /* Star & Tooltip Styles */
+        .star-badge {
+            color: #f1c40f;
+            cursor: help;
+            margin-left: 8px;
+            position: relative;
+            display: inline-block;
+            font-size: 1.4rem;
+            vertical-align: middle;
+        }
+        .star-badge .tooltiptext {
+            visibility: hidden;
+            width: 260px;
+            background-color: #1e2b3a;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 10px 14px;
+            position: absolute;
+            z-index: 10;
+            bottom: 130%;
+            left: 50%;
+            margin-left: -130px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: 400;
+            line-height: 1.5;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            font-family: 'Inter', sans-serif;
+        }
+        .star-badge .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #1e2b3a transparent transparent transparent;
+        }
+        .star-badge:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+        .option {
+            display: flex; align-items: center; gap: 16px; background: white; border: 1.5px solid var(--border);
+            border-radius: 16px; padding: 14px 18px; cursor: pointer; transition: all 0.15s;
+        }
+        .option:hover:not(.disabled) { border-color: var(--primary); background-color: #f9fcff; }
+        .option.selected { border-color: var(--primary); background-color: #f0f5fb; }
+        .option.correct-option { border-color: var(--correct); background-color: var(--correct-bg); }
+        .option.wrong-option { border-color: var(--wrong); background-color: var(--wrong-bg); }
+        .option.show-correct { border-color: var(--correct); background-color: #e0f0e6; }
+        .option.disabled { cursor: default; opacity: 0.9; }
+        .opt-letter {
+            width: 32px; height: 32px; border-radius: 50%; background: #eef2f6; color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1rem; flex-shrink: 0;
+        }
+        .option.selected .opt-letter { background: var(--primary); color: white; }
+        .option.correct-option .opt-letter { background: var(--correct); color: white; }
+        .option.wrong-option .opt-letter { background: var(--wrong); color: white; }
+        .option.show-correct .opt-letter { background: var(--correct); color: white; }
+        .opt-text { font-weight: 500; color: var(--text); }
+        .feedback-panel { margin-top: 22px; padding: 20px; border-radius: 18px; background: #f9fcff; border: 1px solid var(--border); display: none; }
+        .feedback-panel.show { display: block; }
+        .fb-correct { color: var(--correct); font-weight: 600; margin-bottom: 10px; font-size: 1.1rem; }
+        .fb-wrong { color: var(--wrong); font-weight: 600; margin-bottom: 10px; font-size: 1.1rem; }
+        .fb-explanation { color: var(--text); line-height: 1.6; margin-bottom: 12px; font-size: 0.95rem; }
+        .reference { background: var(--reference-bg); border-left: 4px solid var(--reference); padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; color: var(--reference); font-weight: 500; }
+        .nav-buttons { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+        .btn {
+            border: none; padding: 14px 28px; border-radius: 40px; font-weight: 600; font-size: 0.95rem;
+            cursor: pointer; background: white; color: var(--primary); border: 1.5px solid var(--border);
+            transition: 0.1s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; border: none; }
+        .btn-primary:not(:disabled):hover { background: var(--primary-light); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .start-screen { text-align: center; padding: 25px 10px 10px; }
+        .start-stats { display: flex; gap: 12px; justify-content: center; margin: 25px 0; flex-wrap: wrap; }
+        .stat-item { background: #f0f4fa; border-radius: 24px; padding: 18px 20px; min-width: 90px; }
+        .stat-num { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        .results-screen { display: none; }
+        .results-screen.show { display: block; }
+        .score-ring { text-align: center; margin: 20px 0 25px; }
+        .big-score { font-size: 4rem; font-weight: 700; color: var(--primary); }
+        .review-item { background: white; border-radius: 20px; padding: 18px; margin-bottom: 14px; border: 1px solid var(--border); }
+        .review-q { font-weight: 600; margin-bottom: 8px; }
+        .review-answer { font-size: 0.95rem; padding: 6px 12px; border-radius: 30px; display: inline-block; background: #f0f2f5; margin: 6px 0; }
+        .restart-bar { display: flex; gap: 12px; justify-content: center; margin: 20px 0 10px; flex-wrap: wrap; }
+        .footer-note { font-size: 0.8rem; color: var(--text-muted); margin-top: 20px; text-align: center; }
+        .save-indicator { font-size: 0.8rem; color: var(--reference); margin-left: 10px; font-weight: 400; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="badge">UCC · ASP 401</div>
+    <h1>African Studies Quiz</h1>
+    <div class="subhead">🔹 Past Questions & Exams Drill · Hover over the ⭐ to see exam repeats!</div>
+
+    <!-- start screen -->
+    <div id="startScreen" class="card">
+        <div class="start-screen">
+            <h2 style="color: var(--primary);">📘 Master the Modules</h2>
+            <p style="margin-top: 10px;"><strong>Key topics that repeat in final exams are marked with a star (⭐).</strong></p>
+            <div class="start-stats">
+                <div class="stat-item"><span class="stat-num" id="totalQs">15</span><br>questions</div>
+                <div class="stat-item"><span class="stat-num">📄</span><br>references</div>
+                <div class="stat-item"><span class="stat-num">↻</span><br>shuffle</div>
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="quizController.startNew()">▶ Start Quiz</button>
+                <button class="btn" id="resumeBtn" onclick="quizController.resume()" style="display:none;">↻ Resume saved</button>
+            </div>
+            <p id="resumeHint" style="margin-top: 20px; font-size:0.9rem;"></p>
+        </div>
+    </div>
+
+    <!-- quiz active section -->
+    <div id="quizSection" style="display: none;">
+        <div class="progress-panel">
+            <span class="q-counter" id="qNumLabel">Q1</span>
+            <div class="progress-bar-bg"><div class="progress-fill" id="progressFill" style="width: 0%;"></div></div>
+            <span class="score-badge" id="liveScore">0</span>
+            <span class="save-indicator" id="saveTick">💾 saved</span>
+        </div>
+
+        <div class="card" id="questionCard">
+            <span class="topic-tag" id="topicTag">loading</span>
+            <div class="question-text" id="questionText"></div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="feedback-panel" id="feedbackPanel">
+                <div id="fbHead"></div>
+                <div class="fb-explanation" id="fbExplanation"></div>
+                <div class="reference" id="referenceBox"></div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn" id="prevBtn" onclick="quizController.prev()" disabled>← Previous</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="quizController.next()" disabled>Next →</button>
+        </div>
+        <div style="text-align: right; margin-top: 10px;">
+            <button class="btn" onclick="quizController.restartAndShuffle()">🔄 restart & shuffle</button>
+        </div>
+    </div>
+
+    <!-- results screen -->
+    <div id="resultsSection" class="card results-screen">
+        <div class="score-ring">
+            <span class="big-score" id="finalScore">0</span> / <span id="finalTotal">0</span>
+            <div style="font-size: 1.2rem; margin-top: 10px;" id="scoreMessage"></div>
+        </div>
+        <div style="display: flex; gap: 20px; justify-content: center; margin: 20px 0;">
+            <div><span style="color: var(--correct);">✔ correct</span> <span id="correctCount">0</span></div>
+            <div><span style="color: var(--wrong);">✘ wrong</span> <span id="wrongCount">0</span></div>
+        </div>
+        <div class="restart-bar">
+            <button class="btn btn-primary" onclick="quizController.restartAndShuffle()">↻ New shuffled round</button>
+        </div>
+        <div id="reviewContainer" style="margin-top: 30px;"></div>
+    </div>
+    <div class="footer-note">Options are randomized per question.</div>
+</div>
+
+<script>
+// ==================== QUESTION BANK (Extracted from NotebookLM text) ====================
+const rawBank = [
+    { 
+        topic: "Scope & Objectives", 
+        q: "What is the main objective of African Studies? To _________.", 
+        opts: ["find African solutions to African problems", "know African people", "know how Africans achieve independence", "appreciate African resources"], 
+        correct: 0, 
+        exp: "African Studies aims to equip present and future generations with requisite skills for appreciating contemporary problems and finding solutions from an African perspective.", 
+        ref: "Unit 1 Section 4.1",
+        repeats: "Appears 3 times in Exams:<br>• 2018/2019 Q1<br>• 2016/2017 Q1<br>• 2014/2015 Q1"
+    },
+    { 
+        topic: "Political Systems", 
+        q: "Which of the following societies are acephalous?", 
+        opts: ["Konkomba", "Ga", "Ewe", "Asante"], 
+        correct: 0, 
+        exp: "Acephalous (stateless) societies lack centralized authority structures. The Konkomba are a classic example.", 
+        ref: "Unit 2 Section 6.3",
+        repeats: "Appears 2 times in Exams:<br>• 2018/2019 Q2<br>• 2017/2018 Q2"
+    },
+    { 
+        topic: "African Family & Marriage", 
+        q: "The practice in Africa where a man marries more than one wife is known as ____________.", 
+        opts: ["polygamy", "polygyny", "polyandry", "polilocality"], 
+        correct: 1, 
+        exp: "Polygyny specifically refers to one man marrying multiple wives. Polygamy is an umbrella term.", 
+        ref: "Unit 3 Section 4",
+        repeats: "Appears 4 times in Exams:<br>• 2020/2021 Q3 & Q4<br>• 2019/2020 Q3<br>• 2016/2017 Q2"
+    },
+    { 
+        topic: "Cold War & Africa", 
+        q: "What was responsible for the new wave of enthusiasm for African Studies since the 1990’s?", 
+        opts: ["The collapse of capitalism", "The Cold War", "The Apartheid System", "Resurgence of multi-party democracy"], 
+        correct: 3, 
+        exp: "The end of the Cold War and the subsequent resurgence of multi-party democracy in the 1990s brought new enthusiasm to the discipline.", 
+        ref: "Unit 6 Section 3.1-8",
+        repeats: "Appears 3 times in Exams:<br>• 2019/2020 Q4<br>• 2017/2018 Q4<br>• 2016/2017 Q4"
+    },
+    { 
+        topic: "Governance Systems", 
+        q: "Which of the following is NOT an example of a non-centralized society? (Adapted)", 
+        opts: ["Nuer", "Yako", "Ibo", "Asante"], 
+        correct: 3, 
+        exp: "The Asante operated a highly centralized state system, whereas the Nuer, Yako, and Ibo are often cited as non-centralized (acephalous).", 
+        ref: "Unit 2 Section 6.6",
+        repeats: "Appears 2 times in Exams:<br>• 2020/2021 Q1<br>• 2019/2020 Q2"
+    },
+    { 
+        topic: "Beliefs & Rituals", 
+        q: "Which of the following is the source for a belief in God by Africans?", 
+        opts: ["Ancestral veneration", "People’s reflection on the universe", "The idea of God", "The study of the Cosmos"], 
+        correct: 1, 
+        exp: "Through observation and reflection on the universe, indigenous Africans conceptualized the existence of a Supreme Being.", 
+        ref: "Unit 2 Section 4.7",
+        repeats: "Appears 2 times in Exams:<br>• 2016/2017 Q3<br>• 2016/2017(Resit) Q3"
+    },
+    { 
+        topic: "Cold War & Africa", 
+        q: "How did the Cold War negatively affect governance in Africa?", 
+        opts: ["It forced African countries to industrialize too quickly.", "Superpowers supported dictators and brutal regimes to maintain alliances.", "It eliminated the presence of military weapons.", "It immediately collapsed the Apartheid system."], 
+        correct: 1, 
+        exp: "During the Cold War, superpowers frequently supported authoritarian dictators in Africa as long as they aligned with their ideological bloc.", 
+        ref: "Unit 6 Section 3.1-8",
+        repeats: "Appears 2 times in Exams:<br>• 2016/2017 Q4<br>• 2016/2017(Resit) Q4"
+    },
+    { 
+        topic: "Scope & Objectives", 
+        q: "Which countries in Africa are known as Lusophone countries?", 
+        opts: ["Countries colonized by Belgium", "Former German colonies", "Former colonies of Portugal", "Countries once colonized by the Dutch"], 
+        correct: 2, 
+        exp: "Lusophone countries are those that speak Portuguese, stemming from Portuguese colonization.", 
+        ref: "Unit 1 Section p.63" 
+    },
+    { 
+        topic: "Early History", 
+        q: "Which of the following was discovered by Dr. Louis Leakey around Lake Victoria?", 
+        opts: ["Primates", "Rusinga", "Fossils", "Proconsul"], 
+        correct: 3, 
+        exp: "Dr. Louis Leakey discovered the skull of Proconsul (an early Miocene ape) near Lake Victoria.", 
+        ref: "Unit 1 Section p.41" 
+    },
+    { 
+        topic: "African Family", 
+        q: "Under which rule of residence may a couple live in the man’s mother’s brother’s house?", 
+        opts: ["Patrilocal", "Duolocal", "Avunculocal", "Neolocal"], 
+        correct: 2, 
+        exp: "Avunculocal residence involves the couple settling with or near the maternal uncle of the groom.", 
+        ref: "Unit 3 Section 4 p.132" 
+    },
+    { 
+        topic: "Conceptual History", 
+        q: "What is the main thesis in the Hamitic theory?", 
+        opts: ["Any achievements in Africa are attributable to the Caucasian race", "Civilization started from Africa", "Africans contributed a lot to the development of writing", "All continents were formed out of Africa"], 
+        correct: 0, 
+        exp: "The historically racist Hamitic Theory incorrectly asserted that any evidence of complex civilization in Africa was brought by Caucasoid invaders.", 
+        ref: "Unit 2 Section p.37" 
+    },
+    { 
+        topic: "African Family", 
+        q: "Which African society practices Ghost Marriage?", 
+        opts: ["Asante", "Nuer", "Khoikoi", "Zulu"], 
+        correct: 1, 
+        exp: "Among the Nuer, a woman can be married to a deceased man's ghost, with a relative acting as a stand-in to produce heirs for the deceased.", 
+        ref: "Unit 3 Section 4 p.128" 
+    },
+    { 
+        topic: "History of the Discipline", 
+        q: "Who came out with the thesis that Africa was not only the cradle of humanity but also the cradle of civilization?", 
+        opts: ["Basil Davidson", "Cheikh Anta Diop", "Adu Boahen", "Molefi Asante"], 
+        correct: 1, 
+        exp: "Senegalese scholar Cheikh Anta Diop championed the assertion that Africa is the cradle of both humanity and civilization.", 
+        ref: "Unit 1" 
+    },
+    { 
+        topic: "Sociology & Culture", 
+        q: "The process of transmitting culture from one generation to the next is known as ____________.", 
+        opts: ["acculturation", "acclimatization", "enculturation", "socialization"], 
+        correct: 2, 
+        exp: "Enculturation is the process where individuals learn the requirements of their surrounding culture and acquire the values necessary.", 
+        ref: "Unit 2 Section p.81" 
+    },
+    { 
+        topic: "History of the Discipline", 
+        q: "In which year was the African Studies Association formed?", 
+        opts: ["1957", "1958", "1959", "1960"], 
+        correct: 0, 
+        exp: "The African Studies Association was established in 1957.", 
+        ref: "Unit 1 Section p.15" 
+    }
+];
+
+document.getElementById('totalQs').innerText = rawBank.length;
+document.getElementById('finalTotal').innerText = rawBank.length;
+
+// ==================== SHUFFLER (Options & Correct Index) ====================
+function buildShuffledQuestionsFromRaw(rawArray) {
+    return rawArray.map(item => {
+        const optsWithIndex = item.opts.map((text, idx) => ({ text, isCorrect: idx === item.correct }));
+        for (let i = optsWithIndex.length-1; i>0; i--) {
+            const j = Math.floor(Math.random()*(i+1));
+            [optsWithIndex[i], optsWithIndex[j]] = [optsWithIndex[j], optsWithIndex[i]];
+        }
+        const newOpts = optsWithIndex.map(o => o.text);
+        const newCorrect = optsWithIndex.findIndex(o => o.isCorrect);
+        return {
+            topic: item.topic,
+            q: item.q,
+            opts: newOpts,
+            ans: newCorrect, 
+            exp: item.exp,
+            ref: item.ref,
+            repeats: item.repeats || null
+        };
+    });
+}
+
+// ==================== STATE MANAGER ====================
+const quizState = (function() {
+    let currentQuestions = [];
+    let userAnswers = [];
+    let answered = [];
+    let score = 0;
+    let currentIdx = 0;
+    const letters = ['A','B','C','D'];
+
+    function shuffleArray(arr) {
+        for (let i = arr.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+        return arr;
+    }
+
+    function initNew() {
+        const withShuffledOptions = buildShuffledQuestionsFromRaw(rawBank);
+        currentQuestions = shuffleArray(withShuffledOptions);
+        userAnswers = new Array(rawBank.length).fill(-1);
+        answered = new Array(rawBank.length).fill(false);
+        score = 0;
+        currentIdx = 0;
+    }
+
+    function loadFromSaved(saved) {
+        currentQuestions = saved.qs;
+        userAnswers = saved.answers;
+        answered = saved.answered;
+        score = saved.score;
+        currentIdx = saved.idx;
+    }
+
+    function getCurrent() { return { q: currentQuestions[currentIdx], idx: currentIdx, total: currentQuestions.length }; }
+    function answerCurrent(opt) {
+        if (answered[currentIdx]) return false;
+        answered[currentIdx] = true;
+        userAnswers[currentIdx] = opt;
+        if (opt === currentQuestions[currentIdx].ans) score++;
+        return true;
+    }
+    function moveTo(newIdx) { if (newIdx>=0 && newIdx<currentQuestions.length) currentIdx = newIdx; }
+    function isAnswered(idx) { return answered[idx]; }
+    function getUserAnswer(idx) { return userAnswers[idx]; }
+    function getScore() { return score; }
+    function getQuestions() { return currentQuestions; }
+    function getState() { return { qs: currentQuestions, answers: userAnswers, answered: answered, score: score, idx: currentIdx }; }
+
+    return { initNew, loadFromSaved, getCurrent, answerCurrent, moveTo, isAnswered, getUserAnswer, getScore, getQuestions, getState, letters };
+})();
+
+// ==================== STORAGE ====================
+const storageModule = (function() {
+    const KEY = 'asp401_exam_drill';
+    function save(state) { localStorage.setItem(KEY, JSON.stringify(state)); }
+    function load() { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }
+    function clear() { localStorage.removeItem(KEY); }
+    return { save, load, clear };
+})();
+
+// ==================== UI RENDERER ====================
+const uiRenderer = (function() {
+    function showStart(resumeVisible) {
+        document.getElementById('startScreen').style.display = 'block';
+        document.getElementById('quizSection').style.display = 'none';
+        document.getElementById('resultsSection').classList.remove('show');
+        document.getElementById('resumeBtn').style.display = resumeVisible ? 'inline-block' : 'none';
+        document.getElementById('resumeHint').innerText = resumeVisible ? '📌 Saved session found – click resume' : '';
+    }
+    function hideStart() { document.getElementById('startScreen').style.display = 'none'; }
+
+    function renderQuestion(q, idx, total, ansState, letters, answeredFlag, userAns, score) {
+        document.getElementById('quizSection').style.display = 'block';
+        document.getElementById('resultsSection').classList.remove('show');
+        document.getElementById('qNumLabel').innerText = `Q${idx+1}/${total}`;
+        document.getElementById('progressFill').style.width = ((idx+1)/total*100)+'%';
+        document.getElementById('topicTag').innerText = q.topic;
+        
+        // Handle Exam Repeats (Star Tooltip)
+        let starHtml = '';
+        if (q.repeats) {
+            starHtml = `<span class="star-badge">⭐<span class="tooltiptext">${q.repeats}</span></span>`;
+        }
+        document.getElementById('questionText').innerHTML = (idx+1)+'. '+q.q + starHtml;
+        document.getElementById('liveScore').innerText = score;
+
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = '';
+        q.opts.forEach((opt,i) => {
+            const div = document.createElement('div');
+            div.className = 'option';
+            if (answeredFlag) {
+                div.classList.add('disabled');
+                if (i === q.ans) div.classList.add('show-correct');
+                if (i === userAns && userAns !== q.ans) div.classList.add('wrong-option');
+                else if (i === q.ans) div.classList.add('correct-option');
+            }
+            div.innerHTML = `<div class="opt-letter">${letters[i]}</div><div class="opt-text">${opt}</div>`;
+            if (!answeredFlag) div.onclick = () => quizController.handleAnswer(i);
+            container.appendChild(div);
+        });
+
+        const fb = document.getElementById('feedbackPanel');
+        if (answeredFlag) {
+            fb.classList.add('show');
+            const correct = (userAns === q.ans);
+            document.getElementById('fbHead').innerHTML = correct ? '<div class="fb-correct">✔ Correct</div>' : '<div class="fb-wrong">✘ Incorrect</div>';
+            document.getElementById('fbExplanation').innerHTML = q.exp;
+            document.getElementById('referenceBox').innerText = '📖 Ref: ' + q.ref;
+        } else fb.classList.remove('show');
+
+        document.getElementById('prevBtn').disabled = (idx === 0);
+        document.getElementById('nextBtn').disabled = !answeredFlag;
+        document.getElementById('nextBtn').innerText = (idx === total-1) ? 'Finish' : 'Next →';
+        document.getElementById('saveTick').style.opacity = 0.6;
+    }
+
+    function showResults(score, total, questions, userAnswers, letters) {
+        document.getElementById('quizSection').style.display = 'none';
+        const rs = document.getElementById('resultsSection');
+        rs.classList.add('show');
+        document.getElementById('finalScore').innerText = score;
+        document.getElementById('correctCount').innerText = score;
+        document.getElementById('wrongCount').innerText = total - score;
+        document.getElementById('scoreMessage').innerText = ((score/total)*100).toFixed(1)+'%';
+
+        let revHtml = '<h3 style="margin:20px 0 10px;">Review answers</h3>';
+        questions.forEach((q,i) => {
+            const correct = (userAnswers[i] === q.ans);
+            let starHtml = q.repeats ? ` <span style="color:#c89f3c;" title="${q.repeats.replace(/<[^>]*>?/gm, ' ')}">⭐</span>` : '';
+            revHtml += `<div class="review-item"><div class="review-q">${i+1}. ${q.q}${starHtml}</div>`;
+            revHtml += `<div><span class="review-answer" style="background:${correct?'#e6f4ea':'#fdeded'};">Your: ${userAnswers[i]>=0?letters[userAnswers[i]]:'–'} | Correct: ${letters[q.ans]}</span></div>`;
+            revHtml += `<div style="font-size:0.85rem; margin-top:8px;">${q.exp} <br><span style="color:var(--reference);">${q.ref}</span></div></div>`;
+        });
+        document.getElementById('reviewContainer').innerHTML = revHtml;
+    }
+
+    return { showStart, hideStart, renderQuestion, showResults };
+})();
+
+// ==================== CONTROLLER ====================
+const quizController = (function() {
+    function refreshUI() {
+        const cur = quizState.getCurrent();
+        uiRenderer.renderQuestion(cur.q, cur.idx, cur.total, quizState.isAnswered(cur.idx), quizState.letters, quizState.isAnswered(cur.idx), quizState.getUserAnswer(cur.idx), quizState.getScore());
+        storageModule.save(quizState.getState());
+    }
+
+    function startNew() {
+        quizState.initNew();
+        uiRenderer.hideStart();
+        refreshUI();
+    }
+
+    function resume() {
+        const saved = storageModule.load();
+        if (saved) { quizState.loadFromSaved(saved); uiRenderer.hideStart(); refreshUI(); }
+        else startNew();
+    }
+
+    function handleAnswer(opt) {
+        if (quizState.answerCurrent(opt)) refreshUI();
+    }
+
+    function next() {
+        const cur = quizState.getCurrent();
+        if (cur.idx < cur.total-1) { quizState.moveTo(cur.idx+1); refreshUI(); }
+        else finish();
+    }
+
+    function prev() {
+        const cur = quizState.getCurrent();
+        if (cur.idx > 0) { quizState.moveTo(cur.idx-1); refreshUI(); }
+    }
+
+    function finish() {
+        const total = quizState.getQuestions().length;
+        const score = quizState.getScore();
+        const questions = quizState.getQuestions();
+        const userAnswers = questions.map((_,i)=>quizState.getUserAnswer(i));
+        uiRenderer.showResults(score, total, questions, userAnswers, quizState.letters);
+        storageModule.clear();
+    }
+
+    function restartAndShuffle() {
+        quizState.initNew();
+        uiRenderer.hideStart();
+        refreshUI();
+    }
+
+    function init() {
+        const saved = storageModule.load();
+        uiRenderer.showStart(!!saved);
+    }
+
+    return { startNew, resume, handleAnswer, next, prev, restartAndShuffle, init };
+})();
+
+window.onload = function() { quizController.init(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,732 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: ExamForge — exam generator API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: exams
+    description: Exam CRUD
+  - name: questions
+    description: Question CRUD
+  - name: attempts
+    description: Quiz attempts
+  - name: dashboard
+    description: Dashboard summaries
+  - name: leaderboard
+    description: Per-exam leaderboards
+  - name: preferences
+    description: User preferences
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Dashboard overview
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-attempts:
+    get:
+      operationId: getRecentAttempts
+      tags: [dashboard]
+      summary: Recent attempts across all exams
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttemptSummary" }
+
+  /exams:
+    get:
+      operationId: listExams
+      tags: [exams]
+      summary: List all exams
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExamWithCounts" }
+    post:
+      operationId: createExam
+      tags: [exams]
+      summary: Create a new exam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateExamBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Exam" }
+
+  /exams/{examId}:
+    get:
+      operationId: getExam
+      tags: [exams]
+      summary: Get a single exam (with questions)
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExamDetail" }
+        "404": { description: Not found }
+    patch:
+      operationId: updateExam
+      tags: [exams]
+      summary: Update an exam
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateExamBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Exam" }
+    delete:
+      operationId: deleteExam
+      tags: [exams]
+      summary: Delete an exam
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Deleted }
+
+  /exams/{examId}/stats:
+    get:
+      operationId: getExamStats
+      tags: [exams]
+      summary: Stats for a single exam
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExamStats" }
+
+  /exams/{examId}/questions:
+    post:
+      operationId: createQuestion
+      tags: [questions]
+      summary: Add a question to an exam
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateQuestionBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Question" }
+
+  /exams/{examId}/questions/bulk:
+    post:
+      operationId: bulkImportQuestions
+      tags: [questions]
+      summary: Bulk import questions into an exam from a JSON array
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BulkImportQuestionsBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BulkImportResult" }
+
+  /questions/{questionId}:
+    patch:
+      operationId: updateQuestion
+      tags: [questions]
+      summary: Update a question
+      parameters:
+        - in: path
+          name: questionId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateQuestionBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Question" }
+    delete:
+      operationId: deleteQuestion
+      tags: [questions]
+      summary: Delete a question
+      parameters:
+        - in: path
+          name: questionId
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Deleted }
+
+  /exams/{examId}/attempts:
+    post:
+      operationId: startAttempt
+      tags: [attempts]
+      summary: Start a new attempt for an exam (returns shuffled questions)
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StartAttemptBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttemptDetail" }
+    get:
+      operationId: listAttemptsForExam
+      tags: [attempts]
+      summary: List recent attempts for an exam
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AttemptSummary" }
+
+  /attempts/{attemptId}:
+    get:
+      operationId: getAttempt
+      tags: [attempts]
+      summary: Get attempt with answers and questions
+      parameters:
+        - in: path
+          name: attemptId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttemptDetail" }
+
+  /attempts/{attemptId}/answers:
+    post:
+      operationId: submitAnswer
+      tags: [attempts]
+      summary: Submit an answer for one question in an attempt
+      parameters:
+        - in: path
+          name: attemptId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmitAnswerBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubmitAnswerResult" }
+
+  /attempts/{attemptId}/finish:
+    post:
+      operationId: finishAttempt
+      tags: [attempts]
+      summary: Finalize an attempt
+      parameters:
+        - in: path
+          name: attemptId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FinishAttemptBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttemptDetail" }
+
+  /exams/{examId}/leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get leaderboard for an exam
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LeaderboardEntry" }
+    post:
+      operationId: submitLeaderboardEntry
+      tags: [leaderboard]
+      summary: Submit a leaderboard entry
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmitLeaderboardEntryBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaderboardEntry" }
+
+  /user-preferences:
+    get:
+      operationId: getUserPreferences
+      tags: [preferences]
+      summary: Get all user preferences
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserPreference" }
+    put:
+      operationId: setUserPreference
+      tags: [preferences]
+      summary: Set a user preference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetUserPreferenceBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPreference" }
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+
+    Exam:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        courseCode: { type: string, nullable: true }
+        institution: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, createdAt, updatedAt]
+
+    ExamWithCounts:
+      allOf:
+        - $ref: "#/components/schemas/Exam"
+        - type: object
+          properties:
+            questionCount: { type: integer }
+            attemptCount: { type: integer }
+            avgScorePct: { type: number, nullable: true }
+          required: [questionCount, attemptCount]
+
+    ExamDetail:
+      allOf:
+        - $ref: "#/components/schemas/Exam"
+        - type: object
+          properties:
+            questions:
+              type: array
+              items: { $ref: "#/components/schemas/Question" }
+          required: [questions]
+
+    CreateExamBody:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        courseCode: { type: string, nullable: true }
+        institution: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+      required: [title]
+
+    UpdateExamBody:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        courseCode: { type: string, nullable: true }
+        institution: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+
+    Question:
+      type: object
+      properties:
+        id: { type: string }
+        examId: { type: string }
+        questionType: { type: string, enum: [mcq, essay], default: mcq }
+        topic: { type: string, nullable: true }
+        prompt: { type: string }
+        options:
+          type: array
+          items: { type: string }
+        correctIndex: { type: integer }
+        essayAnswer: { type: string, nullable: true }
+        explanation: { type: string, nullable: true }
+        reference: { type: string, nullable: true }
+        repeatNote: { type: string, nullable: true }
+        position: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, examId, questionType, prompt, options, correctIndex, position, createdAt]
+
+    CreateQuestionBody:
+      type: object
+      properties:
+        questionType: { type: string, enum: [mcq, essay], default: mcq }
+        topic: { type: string, nullable: true }
+        prompt: { type: string, minLength: 1 }
+        options:
+          type: array
+          items: { type: string, minLength: 1 }
+          minItems: 2
+          maxItems: 8
+        correctIndex: { type: integer, minimum: 0 }
+        essayAnswer: { type: string, nullable: true }
+        explanation: { type: string, nullable: true }
+        reference: { type: string, nullable: true }
+        repeatNote: { type: string, nullable: true }
+      required: [prompt]
+
+    BulkImportQuestionsBody:
+      type: object
+      properties:
+        questions:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: "#/components/schemas/CreateQuestionBody" }
+      required: [questions]
+
+    BulkImportResult:
+      type: object
+      properties:
+        insertedCount: { type: integer }
+        examId: { type: string }
+      required: [insertedCount, examId]
+
+    UpdateQuestionBody:
+      type: object
+      properties:
+        questionType: { type: string, enum: [mcq, essay] }
+        topic: { type: string, nullable: true }
+        prompt: { type: string, minLength: 1 }
+        options:
+          type: array
+          items: { type: string, minLength: 1 }
+          minItems: 2
+          maxItems: 8
+        correctIndex: { type: integer, minimum: 0 }
+        essayAnswer: { type: string, nullable: true }
+        explanation: { type: string, nullable: true }
+        reference: { type: string, nullable: true }
+        repeatNote: { type: string, nullable: true }
+        position: { type: integer }
+
+    StartAttemptBody:
+      type: object
+      properties:
+        shuffleQuestions: { type: boolean, default: true }
+        shuffleOptions: { type: boolean, default: true }
+        sectionType: { type: string, enum: [mcq, essay], default: mcq }
+        timeLimitMinutes: { type: integer, minimum: 1, maximum: 300, nullable: true }
+        userName: { type: string, nullable: true }
+
+    AttemptQuestion:
+      type: object
+      description: Question rendered for a specific attempt; option order is shuffled per attempt.
+      properties:
+        id: { type: string }
+        questionId: { type: string }
+        questionType: { type: string, enum: [mcq, essay] }
+        topic: { type: string, nullable: true }
+        prompt: { type: string }
+        options:
+          type: array
+          items: { type: string }
+        essayAnswer: { type: string, nullable: true }
+        explanation: { type: string, nullable: true }
+        reference: { type: string, nullable: true }
+        repeatNote: { type: string, nullable: true }
+        position: { type: integer }
+        selectedIndex: { type: integer, nullable: true }
+        correctIndex: { type: integer, nullable: true }
+        isAnswered: { type: boolean }
+        isCorrect: { type: boolean, nullable: true }
+      required: [id, questionId, questionType, prompt, options, position, isAnswered]
+
+    AttemptDetail:
+      type: object
+      properties:
+        id: { type: string }
+        examId: { type: string }
+        examTitle: { type: string }
+        examCourseCode: { type: string, nullable: true }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        score: { type: integer }
+        total: { type: integer }
+        scorePct: { type: number }
+        status: { type: string, enum: [in_progress, finished] }
+        userName: { type: string, nullable: true }
+        sectionType: { type: string, enum: [mcq, essay] }
+        timeLimitMinutes: { type: integer, nullable: true }
+        elapsedSeconds: { type: integer }
+        questions:
+          type: array
+          items: { $ref: "#/components/schemas/AttemptQuestion" }
+      required: [id, examId, examTitle, startedAt, score, total, scorePct, status, sectionType, elapsedSeconds, questions]
+
+    AttemptSummary:
+      type: object
+      properties:
+        id: { type: string }
+        examId: { type: string }
+        examTitle: { type: string }
+        examCourseCode: { type: string, nullable: true }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        score: { type: integer }
+        total: { type: integer }
+        scorePct: { type: number }
+        status: { type: string, enum: [in_progress, finished] }
+        userName: { type: string, nullable: true }
+        sectionType: { type: string, enum: [mcq, essay] }
+        timeLimitMinutes: { type: integer, nullable: true }
+        elapsedSeconds: { type: integer }
+      required: [id, examId, examTitle, startedAt, score, total, scorePct, status, sectionType, elapsedSeconds]
+
+    SubmitAnswerBody:
+      type: object
+      properties:
+        attemptQuestionId: { type: string }
+        selectedIndex: { type: integer, minimum: 0 }
+        essayAnswer: { type: string }
+        elapsedSeconds: { type: integer, minimum: 0 }
+      required: [attemptQuestionId]
+
+    SubmitAnswerResult:
+      type: object
+      properties:
+        attemptQuestionId: { type: string }
+        selectedIndex: { type: integer }
+        correctIndex: { type: integer }
+        isCorrect: { type: boolean }
+        score: { type: integer }
+        total: { type: integer }
+      required: [attemptQuestionId, selectedIndex, correctIndex, isCorrect, score, total]
+
+    ExamStats:
+      type: object
+      properties:
+        examId: { type: string }
+        questionCount: { type: integer }
+        attemptCount: { type: integer }
+        avgScorePct: { type: number, nullable: true }
+        bestScorePct: { type: number, nullable: true }
+        topicBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              topic: { type: string }
+              count: { type: integer }
+            required: [topic, count]
+        repeatHotlist:
+          description: Questions flagged as exam repeats
+          type: array
+          items:
+            type: object
+            properties:
+              questionId: { type: string }
+              prompt: { type: string }
+              repeatNote: { type: string }
+            required: [questionId, prompt, repeatNote]
+      required: [examId, questionCount, attemptCount, topicBreakdown, repeatHotlist]
+
+    DashboardSummary:
+      type: object
+      properties:
+        examCount: { type: integer }
+        questionCount: { type: integer }
+        attemptCount: { type: integer }
+        finishedAttemptCount: { type: integer }
+        avgScorePct: { type: number, nullable: true }
+        topExams:
+          type: array
+          items:
+            type: object
+            properties:
+              examId: { type: string }
+              title: { type: string }
+              courseCode: { type: string, nullable: true }
+              attemptCount: { type: integer }
+              avgScorePct: { type: number, nullable: true }
+            required: [examId, title, attemptCount]
+      required: [examCount, questionCount, attemptCount, finishedAttemptCount, topExams]
+
+    FinishAttemptBody:
+      type: object
+      properties:
+        elapsedSeconds: { type: integer, minimum: 0 }
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        id: { type: string }
+        examId: { type: string }
+        userName: { type: string }
+        score: { type: integer }
+        total: { type: integer }
+        scorePct: { type: number }
+        elapsedSeconds: { type: integer }
+        completedAt: { type: string, format: date-time }
+      required: [id, examId, userName, score, total, scorePct, elapsedSeconds, completedAt]
+
+    SubmitLeaderboardEntryBody:
+      type: object
+      properties:
+        userName: { type: string, minLength: 1 }
+        score: { type: integer, minimum: 0 }
+        total: { type: integer, minimum: 1 }
+        elapsedSeconds: { type: integer, minimum: 0 }
+      required: [userName, score, total]
+
+    UserPreference:
+      type: object
+      properties:
+        key: { type: string }
+        value: { type: string }
+        updatedAt: { type: string, format: date-time }
+      required: [key, value, updatedAt]
+
+    SetUserPreferenceBody:
+      type: object
+      properties:
+        key: { type: string, minLength: 1 }
+        value: { type: string }
+      required: [key, value]
