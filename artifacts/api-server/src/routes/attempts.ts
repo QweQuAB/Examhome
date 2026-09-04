@@ -62,6 +62,7 @@ function serializeAttempt(
         prompt: q.prompt,
         options: orderedOptions,
         essayAnswer: q.essayAnswer,
+        userEssayAnswer: (aq as any).essayAnswer ?? null,
         explanation: q.explanation,
         reference: q.reference,
         repeatNote: q.repeatNote,
@@ -275,6 +276,7 @@ router.post("/attempts/:attemptId/answers", async (req, res) => {
       .set({
         selectedIndex: -1, // Essay questions don't have a selected index
         isCorrect: null, // Essay correctness is determined by AI grading later
+        essayAnswer: body.essayAnswer,
         answeredAt: new Date(),
       })
       .where(eq(attemptQuestionsTable.id, aq.id));

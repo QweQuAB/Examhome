@@ -103,6 +103,8 @@ export const attemptQuestionsTable = pgTable(
     /** what the user picked, in the shuffled order */
     selectedIndex: integer("selected_index"),
     isCorrect: integer("is_correct"),
+    /** essay answer text submitted by the user */
+    essayAnswer: text("essay_answer"),
     answeredAt: timestamp("answered_at", { withTimezone: true }),
   },
   (t) => [index("attempt_questions_attempt_id_idx").on(t.attemptId, t.position)],

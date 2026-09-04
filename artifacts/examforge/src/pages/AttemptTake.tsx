@@ -156,6 +156,7 @@ export default function AttemptTake() {
                 isAnswered: true,
                 selectedIndex: -1,
                 isCorrect: null,
+                userEssayAnswer: essayAnswer.trim(),
               };
             }
             return q;
@@ -506,7 +507,7 @@ function ResultsScreen({ attempt, attemptId, onReview }: { attempt: any, attempt
                   {q.questionType === "essay" ? (
                     <div className="p-3 rounded-lg bg-secondary/30 border border-border/40">
                       <p className="text-sm font-medium text-muted-foreground mb-1">Submitted Answer:</p>
-                      <p className="text-foreground whitespace-pre-wrap text-sm">{q.essayAnswer || "No answer submitted"}</p>
+                      <p className="text-foreground whitespace-pre-wrap text-sm">{q.userEssayAnswer || "No answer submitted"}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
