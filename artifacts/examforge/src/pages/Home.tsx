@@ -255,10 +255,11 @@ export default function Home() {
           {/* Exam Cards */}
           {isLoadingExams ? (
             <div
+              key="loading-skeleton"
               className={cn(
                 "gap-4",
                 preferences.layout === "grid"
-                  ? "grid sm:grid-cols-2"
+                  ? "grid grid-cols-1 sm:grid-cols-2"
                   : "flex flex-col"
               )}
             >
@@ -272,7 +273,7 @@ export default function Home() {
                   </Card>
                 ))}
             </div>
-          ) : exams?.length === 0 ? (
+          ) : examsList.length === 0 ? (
             /* Empty State - No Exams */
             <div className="py-16 text-center border-2 border-dashed border-border rounded-xl">
               <BookOpen className="mx-auto h-16 w-16 text-muted-foreground/30 mb-4" />
@@ -321,10 +322,11 @@ export default function Home() {
             </div>
           ) : (
             <div
+              key={`layout-${preferences.layout}`}
               className={cn(
                 "gap-4",
                 preferences.layout === "grid"
-                  ? "grid sm:grid-cols-2"
+                  ? "grid grid-cols-1 sm:grid-cols-2"
                   : "flex flex-col"
               )}
             >

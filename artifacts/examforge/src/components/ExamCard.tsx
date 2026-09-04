@@ -9,6 +9,7 @@ import {
   MoreVertical,
   School,
   Calendar,
+  MoreHorizontal,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,13 +59,13 @@ function ExamCardStacked({ exam, onShare, onDelete }: Omit<ExamCardProps, "layou
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               {exam.courseCode && (
-                <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
+                <Badge variant="secondary" className="bg-secondary text-secondary-foreground truncate max-w-[120px]">
                   {exam.courseCode}
                 </Badge>
               )}
               {exam.institution && (
-                <Badge variant="outline" className="text-xs gap-1">
-                  <School className="h-3 w-3" />
+                <Badge variant="outline" className="text-xs gap-1 truncate max-w-[150px]">
+                  <School className="h-3 w-3 shrink-0" />
                   {exam.institution}
                 </Badge>
               )}
@@ -80,13 +81,13 @@ function ExamCardStacked({ exam, onShare, onDelete }: Omit<ExamCardProps, "layou
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <FileText className="w-3 h-3" /> {exam.questionCount} questions
+                <FileText className="w-3 h-3 shrink-0" /> {exam.questionCount} questions
               </span>
               <span className="flex items-center gap-1">
-                <History className="w-3 h-3" /> {exam.attemptCount} attempts
+                <History className="w-3 h-3 shrink-0" /> {exam.attemptCount} attempts
               </span>
               <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> {format(new Date(exam.createdAt), "MMM d, yyyy")}
+                <Calendar className="w-3 h-3 shrink-0" /> {format(new Date(exam.createdAt), "MMM d, yyyy")}
               </span>
             </div>
           </div>
@@ -133,7 +134,7 @@ function ExamCardGrid({ exam, onShare, onDelete }: Omit<ExamCardProps, "layout">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1 min-w-0">
             {exam.courseCode && (
-              <Badge variant="secondary" className="mb-2 bg-secondary text-secondary-foreground">
+              <Badge variant="secondary" className="mb-2 bg-secondary text-secondary-foreground truncate max-w-full block">
                 {exam.courseCode}
               </Badge>
             )}
@@ -161,8 +162,8 @@ function ExamCardGrid({ exam, onShare, onDelete }: Omit<ExamCardProps, "layout">
           </DropdownMenu>
         </div>
         {exam.institution && (
-          <CardDescription className="flex items-center gap-1">
-            <School className="h-3 w-3" /> {exam.institution}
+          <CardDescription className="flex items-center gap-1 truncate">
+            <School className="h-3 w-3 shrink-0" /> {exam.institution}
           </CardDescription>
         )}
       </CardHeader>
@@ -173,14 +174,14 @@ function ExamCardGrid({ exam, onShare, onDelete }: Omit<ExamCardProps, "layout">
         )}
         <div className="flex justify-between items-center">
           <span className="flex items-center gap-1">
-            <FileText className="w-3 h-3" /> {exam.questionCount} questions
+            <FileText className="w-3 h-3 shrink-0" /> {exam.questionCount} questions
           </span>
           <span className="flex items-center gap-1">
-            <History className="w-3 h-3" /> {exam.attemptCount} attempts
+            <History className="w-3 h-3 shrink-0" /> {exam.attemptCount} attempts
           </span>
         </div>
         <div className="flex items-center gap-1 mt-2 text-xs">
-          <Calendar className="w-3 h-3" /> {format(new Date(exam.createdAt), "MMM d, yyyy")}
+          <Calendar className="w-3 h-3 shrink-0" /> {format(new Date(exam.createdAt), "MMM d, yyyy")}
         </div>
       </CardContent>
 
