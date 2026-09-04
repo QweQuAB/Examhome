@@ -40,13 +40,12 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build Frontend
-        run: pnpm run build
-        working-directory: ./artifacts/examforge
+        run: pnpm --filter @workspace/examforge build
         env:
           BASE_PATH: /Examhome/
 
       - name: Debug build output
-        run: find ./dist -maxdepth 2 -type f | head -20 || echo "dist not found"; find ./artifacts/examforge/dist -maxdepth 2 -type f 2>/dev/null | head -20 || echo "artifacts/examforge/dist not found"
+        run: ls -la ./artifacts/examforge/dist/public 2>/dev/null || ls -la ./dist 2>/dev/null || echo "No dist found"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
