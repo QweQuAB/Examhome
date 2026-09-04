@@ -40,10 +40,21 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build Frontend
-        run: npx vite build
+        run: pnpm exec vite build --debug
         working-directory: ./artifacts/examforge
         env:
           BASE_PATH: /Examhome/
+
+      - name: Check build output
+        run: |
+          echo "=== CWD ==="
+          pwd
+          echo "=== artifacts/examforge/dist contents ==="
+          ls -la artifacts/examforge/dist/ 2>/dev/null || echo "artifacts/examforge/dist/ NOT FOUND"
+          echo "=== ./dist contents ==="
+          ls -la dist/ 2>/dev/null || echo "./dist/ NOT FOUND"
+          echo "=== find all dist directories ==="
+          find . -type d -name "dist" -not -path "*/node_modules/*" 2>/dev/null
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
