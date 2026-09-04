@@ -40,7 +40,8 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build Frontend
-        run: pnpm --filter @workspace/examforge build
+        run: pnpm run build
+        working-directory: ./artifacts/examforge
         env:
           BASE_PATH: /Examhome/
 
