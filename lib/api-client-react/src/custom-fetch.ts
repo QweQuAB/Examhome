@@ -15,7 +15,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 // Module-level configuration
 // ---------------------------------------------------------------------------
 
-let _baseUrl: string | null = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) || "https://exam-cx05.onrender.com";
+let _baseUrl: string | null = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) || "https://examhome.onrender.com";
 let _authTokenGetter: AuthTokenGetter | null = null;
 
 /**
