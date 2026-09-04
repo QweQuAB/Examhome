@@ -69,7 +69,21 @@ router.post("/exams/:examId/questions", async (req, res) => {
 
 router.post("/exams/:examId/questions/bulk", async (req, res) => {
   const examId = req.params.examId;
-  const body = BulkImportQuestionsBody.parse(req.body);
+
+  // Strip options/correctIndex from essay questions before Zod parsing.
+  // The schema marks them .optional(), but older generated versions may not,
+  // and an empty options[] fails the .min(2) constraint regardless.
+  const sanitized = {
+    ...req.body,
+    questions: (req.body.questions ?? []).map((q: any) => {
+      if (q.questionType === "essay") {
+        const { options, correctIndex, ...rest } = q;
+        return rest;
+      }
+      return q;
+    }),
+  };
+  const body = BulkImportQuestionsBody.parse(sanitized);
 
   const [exam] = await db
     .select({ id: examsTable.id })
