@@ -1,7 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { ZodError } from "zod";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -34,10 +33,10 @@ app.use("/api", router);
 
 // Error-handling middleware — catches ZodError and other unhandled errors
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof ZodError) {
+  if (err instanceof Error && err.name === "ZodError" && "errors" in err) {
     res.status(400).json({
       error: "Validation failed",
-      details: err.errors.map((e) => ({ path: e.path.join("."), message: e.message })),
+      details: (err as any).errors.map((e: any) => ({ path: e.path.join("."), message: e.message })),
     });
     return;
   }
