@@ -84,20 +84,28 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
       throw new Error("Missing exam title");
     }
 
-    const questions: ImportQuestion[] = (examData.questions || []).map((q: any, i: number) => ({
-      prompt: q.prompt || `Question ${i + 1}`,
-      options: q.options || [],
-      correctIndex: q.correctIndex ?? 0,
-      explanation: q.explanation,
-      reference: q.reference,
-      topic: q.topic,
+    // Try multiple field names for questions to handle different export versions
+    const rawQuestions =
+      examData.questions ||
+      examData.items ||
+      examData.questionList ||
+      examData.questionListItems ||
+      [];
+
+    const questions: ImportQuestion[] = rawQuestions.map((q: any, i: number) => ({
+      prompt: q.prompt || q.text || q.question || `Question ${i + 1}`,
+      options: q.options || q.choices || q.answers || [],
+      correctIndex: q.correctIndex ?? q.correct ?? q.answer ?? 0,
+      explanation: q.explanation || q.rationale || null,
+      reference: q.reference || q.source || null,
+      topic: q.topic || q.category || null,
     }));
 
     return {
       title: examData.title,
-      courseCode: examData.courseCode,
-      institution: examData.institution,
-      description: examData.description,
+      courseCode: examData.courseCode || examData.course_code || null,
+      institution: examData.institution || examData.organization || null,
+      description: examData.description || examData.desc || null,
       questions,
     };
   };
@@ -138,6 +146,12 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
 
   const handleImport = useCallback(async () => {
     if (!parsedData) return;
+
+    if (parsedData.questions.length === 0) {
+      setError("No questions found in the file. Check that the file contains a questions array.");
+      setStatus("error");
+      return;
+    }
 
     setStatus("importing");
     setImportProgress(10);
@@ -324,7 +338,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
                 {parsedData.questions.length} question{parsedData.questions.length !== 1 ? "s" : ""} found
               </p>
             </div>
-            <Button onClick={handleImport} className="w-full bg-primary hover:bg-primary/90">
+            <Button onClick={handleImport} disabled={parsedData.questions.length === 0} className="w-full bg-primary hover:bg-primary/90">
               Import {parsedData.questions.length} Question{parsedData.questions.length !== 1 ? "s" : ""}
             </Button>
           </div>
