@@ -44,9 +44,6 @@ jobs:
         env:
           BASE_PATH: /Examhome/
 
-      - name: Debug build output
-        run: ls -la ./artifacts/examforge/dist/public 2>/dev/null || ls -la ./dist 2>/dev/null || echo "No dist found"
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
