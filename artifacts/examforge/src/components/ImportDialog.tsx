@@ -26,12 +26,15 @@ interface ImportDialogProps {
 }
 
 interface ImportQuestion {
+  questionType: "mcq" | "essay";
   prompt: string;
   options: string[];
-  correctIndex: number;
+  correctIndex: number | null;
+  essayAnswer?: string | null;
   explanation?: string;
   reference?: string;
   topic?: string;
+  repeatNote?: string;
 }
 
 interface ImportExam {
@@ -84,22 +87,47 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
       throw new Error("Missing exam title");
     }
 
-    // Try multiple field names for questions to handle different export versions
-    const rawQuestions =
-      examData.questions ||
-      examData.items ||
-      examData.questionList ||
-      examData.questionListItems ||
-      [];
+    // Current EXAMFORGE_PACKAGE format splits questions into mcqQuestions and
+    // essayQuestions. Older exports used a single combined "questions" array
+    // (or one of a few other field names). Support both.
+    const mcqRaw: any[] = examData.mcqQuestions || [];
+    const essayRaw: any[] = examData.essayQuestions || [];
 
-    const questions: ImportQuestion[] = rawQuestions.map((q: any, i: number) => ({
-      prompt: q.prompt || q.text || q.question || `Question ${i + 1}`,
-      options: q.options || q.choices || q.answers || [],
-      correctIndex: q.correctIndex ?? q.correct ?? q.answer ?? 0,
-      explanation: q.explanation || q.rationale || null,
-      reference: q.reference || q.source || null,
-      topic: q.topic || q.category || null,
-    }));
+    const rawQuestions: any[] =
+      mcqRaw.length > 0 || essayRaw.length > 0
+        ? [
+            ...mcqRaw.map((q) => ({ ...q, questionType: q.questionType || "mcq" })),
+            ...essayRaw.map((q) => ({ ...q, questionType: q.questionType || "essay" })),
+          ]
+        : examData.questions ||
+          examData.items ||
+          examData.questionList ||
+          examData.questionListItems ||
+          [];
+
+    // Preserve authored order when a `position` field is present
+    rawQuestions.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+    const questions: ImportQuestion[] = rawQuestions.map((q: any, i: number) => {
+      const questionType: "mcq" | "essay" =
+        q.questionType === "essay" ? "essay" : "mcq";
+      const options: string[] = q.options || q.choices || q.answers || [];
+
+      return {
+        questionType,
+        prompt: q.prompt || q.text || q.question || `Question ${i + 1}`,
+        // Essay questions must NOT carry an options array (the API rejects
+        // an empty array — it only accepts 2+ items or the field omitted).
+        options: questionType === "essay" ? [] : options,
+        correctIndex:
+          questionType === "essay" ? null : (q.correctIndex ?? q.correct ?? q.answer ?? 0),
+        essayAnswer: q.essayAnswer ?? null,
+        explanation: q.explanation || q.rationale || null,
+        reference: q.reference || q.source || null,
+        topic: q.topic || q.category || null,
+        repeatNote: q.repeatNote || null,
+      };
+    });
 
     return {
       title: examData.title,
@@ -176,12 +204,16 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
           examId,
           data: {
             questions: parsedData.questions.map((q) => ({
+              questionType: q.questionType,
               prompt: q.prompt,
-              options: q.options,
-              correctIndex: q.correctIndex,
+              // The API requires 2+ options when the field is present at all
+              // (an empty array fails validation) — so omit it for essays.
+              ...(q.questionType === "mcq" ? { options: q.options, correctIndex: q.correctIndex } : {}),
+              essayAnswer: q.essayAnswer || null,
               explanation: q.explanation || null,
               reference: q.reference || null,
               topic: q.topic || null,
+              repeatNote: q.repeatNote || null,
             })),
           },
         });
