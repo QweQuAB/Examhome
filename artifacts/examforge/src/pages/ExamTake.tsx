@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useGetExam, useStartAttempt, getGetExamQueryKey } from "@workspace/api-client-react";
-import { BookOpen, AlertCircle, Loader2, RefreshCw, Clock, User } from "lucide-react";
+import { BookOpen, AlertCircle, Loader2, RefreshCw, Clock, User, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +23,7 @@ export default function ExamTake() {
   const [resumeAttemptId, setResumeAttemptId] = useState<string | null>(null);
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
   const [userName, setUserName] = useState("");
+  const [sectionType, setSectionType] = useState<"mcq" | "essay" | null>(null);
 
   const { data: exam, isLoading } = useGetExam(examId!, {
     query: { enabled: !!examId, queryKey: getGetExamQueryKey(examId!) }
@@ -41,6 +42,20 @@ export default function ExamTake() {
     }
   }, [examId]);
 
+  const questionTypes = useMemo(() => {
+    if (!exam?.questions) return { hasMcq: false, hasEssay: false };
+    const hasMcq = exam.questions.some((q: any) => q.questionType === "mcq");
+    const hasEssay = exam.questions.some((q: any) => q.questionType === "essay");
+    return { hasMcq, hasEssay };
+  }, [exam?.questions]);
+
+  const effectiveSectionType = useMemo(() => {
+    if (sectionType) return sectionType;
+    if (questionTypes.hasMcq && !questionTypes.hasEssay) return "mcq";
+    if (!questionTypes.hasMcq && questionTypes.hasEssay) return "essay";
+    return "mcq";
+  }, [sectionType, questionTypes]);
+
   const handleStart = () => {
     if (userName.trim()) {
       localStorage.setItem("examforge_user_name", userName.trim());
@@ -50,7 +65,7 @@ export default function ExamTake() {
       data: {
         shuffleQuestions: true,
         shuffleOptions: true,
-        sectionType: "mcq",
+        sectionType: effectiveSectionType,
         timeLimitMinutes: timeLimit,
         userName: userName.trim() || undefined,
       }
@@ -133,6 +148,32 @@ export default function ExamTake() {
                 className="bg-secondary/50"
               />
             </div>
+
+            {questionTypes.hasMcq && questionTypes.hasEssay && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <PenLine className="w-3.5 h-3.5" /> Section
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={effectiveSectionType === "mcq" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSectionType("mcq")}
+                    className="text-xs"
+                  >
+                    MCQ
+                  </Button>
+                  <Button
+                    variant={effectiveSectionType === "essay" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSectionType("essay")}
+                    className="text-xs"
+                  >
+                    Essay
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
