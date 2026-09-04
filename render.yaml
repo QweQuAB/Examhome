@@ -1,0 +1,28 @@
+# Render Blueprint — deploys the API server from Examhome monorepo
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: exam
+      runtime: node
+      repo: https://github.com/QweQuAB/Examhome
+      branch: main
+      plan: free
+      envVars:
+      - key: PNPM_VERSION
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        sync: false
+      - key: NODE_VERSION
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      region: oregon
+      buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server build
+      startCommand: cd artifacts/api-server && pnpm run start
+      autoDeployTrigger: commit
