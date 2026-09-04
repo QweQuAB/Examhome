@@ -124,24 +124,17 @@ export function TimerBar({
   };
 
   return (
-    <div className="flex items-center gap-3">
-      {remaining !== null ? (
-        <Badge
-          className={`font-mono text-sm font-bold px-3 py-1.5 rounded-full ${urgencyClass} bg-secondary border-border/40`}
-        >
-          <Clock className="w-3.5 h-3.5 mr-1.5" />
-          {formatTime(remaining)}
-        </Badge>
-      ) : (
-        <Badge className="font-mono text-sm font-medium px-3 py-1.5 rounded-full text-muted-foreground bg-secondary border-border/40">
-          <Clock className="w-3.5 h-3.5 mr-1.5" />
-          {formatTime(elapsed)}
-        </Badge>
-      )}
+    <div className="flex items-center gap-1.5 md:gap-3 overflow-hidden">
+      <Badge
+        className={`font-mono text-[10px] md:text-sm font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-full ${urgencyClass} bg-secondary border-border/40 shrink-0 whitespace-nowrap`}
+      >
+        <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 md:mr-1.5 shrink-0" />
+        {formatTime(remaining ?? elapsed)}
+      </Badge>
 
       {totalSeconds !== null && (
-        <div className="flex-1 min-w-[80px]">
-          <Progress value={progressPct} className={`h-2 bg-secondary`}>
+        <div className="flex-1 min-w-0">
+          <Progress value={progressPct} className={`h-1.5 md:h-2 bg-secondary`}>
             <div className={`h-full ${progressColor} transition-colors duration-1000 rounded-full`} />
           </Progress>
         </div>
@@ -151,15 +144,15 @@ export function TimerBar({
         variant="ghost"
         size="sm"
         onClick={() => setIsPaused(!isPaused)}
-        className="h-8 w-8 p-0"
+        className="h-7 w-7 md:h-8 md:w-8 p-0 shrink-0"
       >
-        {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+        {isPaused ? <Play className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <Pause className="w-3.5 h-3.5 md:w-4 md:h-4" />}
       </Button>
 
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Settings2 className="w-4 h-4" />
+          <Button variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 shrink-0">
+            <Settings2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
@@ -187,7 +180,7 @@ export function TimerBar({
             {timeLimitMinutes !== null && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">Adjust by Steps</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleCustomAdjust(-5)}>-5m</Button>
                   <Button variant="outline" size="sm" onClick={() => handleCustomAdjust(-1)}>-1m</Button>
                   <Button variant="outline" size="sm" onClick={() => handleCustomAdjust(1)}>+1m</Button>

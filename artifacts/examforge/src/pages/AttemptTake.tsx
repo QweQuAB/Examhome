@@ -355,40 +355,40 @@ export default function AttemptTake() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="text-center space-y-6 max-w-sm w-full"
+              className="text-center space-y-4 sm:space-y-6 max-w-xs sm:max-w-sm w-full"
             >
-              <Pause className="w-16 h-16 text-primary mx-auto" />
-              <h2 className="text-2xl font-serif font-bold text-foreground">Quiz Paused</h2>
-              <p className="text-muted-foreground text-sm">
+              <Pause className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto" />
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-foreground">Quiz Paused</h2>
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 Your progress has been saved. The timer is paused.
               </p>
-              <div className="text-4xl font-mono font-bold text-primary">
+              <div className="text-3xl sm:text-4xl font-mono font-bold text-primary">
                 {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:{String(elapsedSeconds % 60).padStart(2, '0')}
               </div>
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg px-8 py-6 h-auto gap-2"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto gap-2"
                 onClick={handleResume}
               >
-                <Play className="w-5 h-5" /> Resume Quiz
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" /> Resume Quiz
               </Button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="min-h-[100dvh] bg-background flex flex-col font-sans">
+      <div className="min-h-[100dvh] bg-background flex flex-col font-sans overflow-x-hidden w-full max-w-full">
         {/* Top Bar */}
-        <div className="sticky top-0 z-40 bg-card border-b border-border/60 shadow-sm">
-          <div className="max-w-3xl mx-auto px-3 py-2 md:px-4 md:py-3 space-y-2">
+        <div className="sticky top-0 z-40 bg-card border-b border-border/60 shadow-sm w-full">
+          <div className="max-w-3xl mx-auto px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-3 space-y-1.5 md:space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <Badge className="bg-secondary text-secondary-foreground text-xs md:text-sm font-semibold px-3 py-1 md:px-4 md:py-1.5 rounded-full border-border/40 shrink-0">
+              <Badge className="bg-secondary text-secondary-foreground text-[10px] md:text-sm font-semibold px-2 py-0.5 md:px-4 md:py-1.5 rounded-full border-border/40 shrink-0">
                 Q {safeIndex + 1}/{totalQuestions}
               </Badge>
 
@@ -423,7 +423,7 @@ export default function AttemptTake() {
               />
             )}
             {attempt.timeLimitMinutes == null && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs text-muted-foreground">
                 <span className="font-mono">{String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:{String(elapsedSeconds % 60).padStart(2, '0')}</span>
                 <span>elapsed</span>
               </div>
@@ -432,8 +432,8 @@ export default function AttemptTake() {
         </div>
 
         {/* Question Number Indicators */}
-        <div className="max-w-3xl mx-auto w-full px-3 md:px-4 pt-3">
-          <div className="flex flex-wrap gap-1.5 md:gap-2 justify-center">
+        <div className="max-w-3xl mx-auto w-full px-2 sm:px-3 md:px-4 pt-2 md:pt-3 overflow-x-hidden">
+          <div className="flex flex-wrap gap-1 md:gap-1.5 justify-center max-h-20 sm:max-h-24 md:max-h-32 overflow-y-auto pb-1">
             {questions.map((q: any, i: number) => {
               const isCurrent = i === safeIndex;
               const isAnswered = q.isAnswered;
@@ -442,7 +442,7 @@ export default function AttemptTake() {
                   key={q.id || i}
                   onClick={() => handleJumpTo(i)}
                   className={`
-                    w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-bold
+                    w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-[10px] sm:text-xs md:text-xs font-bold
                     transition-all duration-200 border-2
                     ${isCurrent
                       ? 'border-primary bg-primary text-primary-foreground scale-110 shadow-md'
@@ -460,8 +460,8 @@ export default function AttemptTake() {
         </div>
 
         {/* Question Card */}
-        <div className="flex-1 flex flex-col items-center px-3 md:px-4 py-4">
-          <div className="w-full max-w-3xl">
+        <div className="flex-1 flex flex-col items-center px-2 sm:px-3 md:px-4 py-3 md:py-4 min-w-0">
+          <div className="w-full max-w-3xl min-w-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={question.id}
@@ -471,7 +471,7 @@ export default function AttemptTake() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="w-full"
               >
-                <div className="bg-card rounded-3xl p-5 md:p-8 shadow-2xl border border-border/80">
+                <div className="bg-card rounded-2xl md:rounded-3xl p-4 sm:p-5 md:p-8 shadow-2xl border border-border/80 min-w-0 overflow-hidden">
                   {question.topic && (
                     <div className="mb-3">
                       <span className="text-xs font-bold uppercase tracking-widest text-accent bg-accent/10 px-3 py-1 rounded-full">
@@ -480,7 +480,7 @@ export default function AttemptTake() {
                     </div>
                   )}
 
-                  <div className="text-lg md:text-xl lg:text-2xl font-serif font-semibold text-primary leading-relaxed mb-6">
+                  <div className="text-base sm:text-lg md:text-xl lg:text-2xl font-serif font-semibold text-primary leading-relaxed mb-4 md:mb-6 break-words min-w-0">
                     {question.questionType === "essay" ? formatEssayPrompt(question.prompt) : question.prompt}
                     {question.repeatNote && (
                       <Tooltip>
@@ -558,7 +558,7 @@ export default function AttemptTake() {
                             <span className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm shrink-0 transition-colors ${letterClasses}`}>
                               {optionLetters[i]}
                             </span>
-                            <span className="font-medium text-foreground text-sm md:text-base">{opt}</span>
+                            <span className="font-medium text-foreground text-sm md:text-base break-words min-w-0">{opt}</span>
                           </button>
                         );
                       })}
@@ -582,18 +582,18 @@ export default function AttemptTake() {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="sticky bottom-0 z-40 bg-card border-t border-border/60 shadow-lg">
-          <div className="max-w-3xl mx-auto px-3 md:px-4 py-3 flex items-center justify-between gap-3">
+        <div className="sticky bottom-0 z-40 bg-card border-t border-border/60 shadow-lg w-full">
+          <div className="max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2 md:gap-3">
             <Button
               variant="ghost"
               onClick={handlePrev}
               disabled={safeIndex === 0}
-              className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 gap-1.5 text-sm md:text-base"
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 gap-1 text-xs md:text-base h-8 md:h-10"
             >
-              <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Previous</span>
+              <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4" /> <span className="hidden sm:inline">Previous</span>
             </Button>
 
-            <span className="text-xs text-muted-foreground font-mono shrink-0">
+            <span className="text-[10px] md:text-xs text-muted-foreground font-mono shrink-0">
               {answeredCount}/{totalQuestions}
             </span>
 
@@ -601,12 +601,12 @@ export default function AttemptTake() {
               size="sm"
               onClick={handleNext}
               disabled={!question?.isAnswered && !isFinished}
-              className={`gap-1.5 font-bold px-4 md:px-8 shadow-md text-sm md:text-base ${!question?.isAnswered && !isFinished ? 'opacity-50' : 'bg-primary hover:bg-primary/90'}`}
+              className={`gap-1 font-bold px-3 md:px-8 shadow-md text-xs md:text-base h-8 md:h-10 ${!question?.isAnswered && !isFinished ? 'opacity-50' : 'bg-primary hover:bg-primary/90'}`}
             >
               {safeIndex === totalQuestions - 1 ? (
                 isFinished ? "View Results" : "Finish"
               ) : (
-                <><span className="hidden sm:inline">Next</span> <ArrowRight className="w-4 h-4" /></>
+                <><span className="hidden sm:inline">Next</span> <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" /></>
               )}
             </Button>
           </div>
@@ -654,7 +654,7 @@ function ResultsScreen({ attempt, attemptId, onReview }: { attempt: any, attempt
   }, [attempt, userName, hasMcqQuestions, hasEssayQuestions, leaderboardSubmitted, submitLeaderboard]);
 
   return (
-    <div className="min-h-[100dvh] bg-background py-6 md:py-10 px-3 md:px-4 font-sans">
+    <div className="min-h-[100dvh] bg-background py-6 md:py-10 px-3 md:px-4 font-sans overflow-x-hidden">
       <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
 
         <Card className="border-border/60 shadow-2xl overflow-hidden bg-card">
@@ -711,8 +711,8 @@ function ResultsScreen({ attempt, attemptId, onReview }: { attempt: any, attempt
                     <XCircle className="w-7 h-7 md:w-8 md:h-8 text-destructive" />
                   }
                 </div>
-                <div className="flex-1 space-y-3 md:space-y-4">
-                  <div className="font-medium text-base md:text-lg leading-snug text-foreground">
+                <div className="flex-1 space-y-3 md:space-y-4 min-w-0">
+                  <div className="font-medium text-base md:text-lg leading-snug text-foreground break-words">
                     <span className="text-muted-foreground mr-2">{i + 1}.</span>
                     {q.questionType === "essay" ? formatEssayPrompt(q.prompt) : q.prompt}
                   </div>

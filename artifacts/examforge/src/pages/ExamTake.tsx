@@ -109,38 +109,38 @@ export default function ExamTake() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto w-full animate-in fade-in zoom-in-95 duration-500 pt-10">
+    <div className="max-w-2xl mx-auto w-full animate-in fade-in zoom-in-95 duration-500 pt-6 sm:pt-10 px-3 sm:px-4 overflow-x-hidden">
       <Card className="border-primary shadow-xl bg-gradient-to-b from-card to-card/50 overflow-hidden">
         <div className="h-2 w-full bg-primary"></div>
-        <CardContent className="pt-12 pb-12 px-8 text-center">
+        <CardContent className="pt-6 sm:pt-12 pb-8 sm:pb-12 px-4 sm:px-8 text-center">
           {exam.courseCode && (
              <div className="inline-block bg-primary text-primary-foreground font-bold text-xs tracking-wider px-3 py-1 rounded-full mb-4">
                {exam.courseCode}
              </div>
           )}
-          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-primary mb-4 leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-primary mb-3 sm:mb-4 leading-tight">
             {exam.title}
           </h1>
-          <p className="text-muted-foreground bg-accent/10 border-l-4 border-accent p-3 rounded-r-lg inline-block text-left text-sm max-w-md mx-auto mb-10">
+          <p className="text-muted-foreground bg-accent/10 border-l-4 border-accent p-2 sm:p-3 rounded-r-lg inline-block text-left text-xs sm:text-sm max-w-md mx-auto mb-6 sm:mb-10">
             <span className="text-accent font-bold">Note:</span> Key topics that repeat in final exams are marked with a star. Pay attention to the explanations.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-6 mb-10">
-            <div className="bg-secondary rounded-2xl p-4 min-w-[100px]">
-              <div className="text-3xl font-bold text-primary">{questions.length}</div>
-              <div className="text-xs text-muted-foreground font-medium mt-1">QUESTIONS</div>
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-6 sm:mb-10">
+            <div className="bg-secondary rounded-2xl p-3 sm:p-4 min-w-[80px] sm:min-w-[100px]">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">{questions.length}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1">QUESTIONS</div>
             </div>
-            <div className="bg-secondary rounded-2xl p-4 min-w-[100px]">
-              <div className="text-3xl font-bold text-primary"><RefreshCw className="w-8 h-8 mx-auto" /></div>
-              <div className="text-xs text-muted-foreground font-medium mt-1">SHUFFLED</div>
+            <div className="bg-secondary rounded-2xl p-3 sm:p-4 min-w-[80px] sm:min-w-[100px]">
+              <div className="text-2xl sm:text-3xl font-bold text-primary"><RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 mx-auto" /></div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1">SHUFFLED</div>
             </div>
           </div>
 
           {/* Quiz Configuration */}
-          <div className="max-w-sm mx-auto space-y-4 mb-10 text-left">
+          <div className="max-w-sm mx-auto space-y-3 sm:space-y-4 mb-6 sm:mb-10 text-left">
             <div>
-              <label className="text-sm font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" /> Your Name (optional, for leaderboard)
+              <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Your Name (optional, for leaderboard)
               </label>
               <Input
                 type="text"
@@ -153,8 +153,8 @@ export default function ExamTake() {
 
             {questionTypes.hasMcq && questionTypes.hasEssay && (
               <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <PenLine className="w-3.5 h-3.5" /> Section
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <PenLine className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Section
                 </label>
                 <div className="flex gap-2">
                   <Button
@@ -178,8 +178,8 @@ export default function ExamTake() {
             )}
 
             <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> Time Limit
+              <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Time Limit
               </label>
               <div className="flex flex-wrap gap-2">
                 {TIMER_PRESETS.map((p) => (
@@ -197,14 +197,14 @@ export default function ExamTake() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Button
               size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg px-8 py-6 h-auto"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto"
               onClick={handleStart}
               disabled={startAttempt.isPending}
             >
-              {startAttempt.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2"/> : <BookOpen className="w-5 h-5 mr-2"/>}
+              {startAttempt.isPending ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-2"/> : <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2"/>}
               Start New Quiz
             </Button>
 
@@ -212,7 +212,7 @@ export default function ExamTake() {
               <Button
                 size="lg"
                 variant="outline"
-                className="font-semibold text-lg px-8 py-6 h-auto"
+                className="font-semibold text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto"
                 onClick={handleResume}
               >
                 Resume Saved
